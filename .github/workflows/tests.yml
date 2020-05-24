@@ -15,8 +15,8 @@ jobs:
 
       - name: Lint
         run: |
-        npm install
-        npm run lint
+          npm install
+          npm run lint
 
   tsc:
     name: Typescript compile
@@ -32,5 +32,5 @@ jobs:
 
       - name: Compile
         run: |
-        npm install
-        npm run compile
+          npm install
+          npm run compile
