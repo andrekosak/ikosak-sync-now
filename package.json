@@ -2,7 +2,7 @@
     "name": "ikosak-sync-now",
     "displayName": "iKosak Sync Now",
     "description": "Develop in VS Code, sync to ServiceNow",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "publisher": "andrekosak",
     "repository": {
         "type": "git",
