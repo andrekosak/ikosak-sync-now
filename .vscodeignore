@@ -1,0 +1,12 @@
+# Ignore everything
+*
+*/**
+**/.DS_Store
+*/**/.DS_Store
+
+# Whitelist only needed
+!node_modules/**
+!out/**
+!package.json
+!README.md
+!CHANGELOG.md
