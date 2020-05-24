@@ -1,0 +1,14 @@
+image: node:10-jessie
+
+build:
+  stage: build
+  script:
+    - 'npm i --unsafe-perm && npm run compile && npm run copy && npm run minify'
+    - 'npm run package'
+    - 'rm -rf node_modules'
+  artifacts:
+    untracked: true
+  only:
+    - tags
+  except:
+    - branches

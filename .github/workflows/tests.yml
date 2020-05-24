@@ -1,0 +1,36 @@
+name: Tests
+on: [push, pull_request]
+jobs:
+  lint:
+    name: Eslint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
+      - name: Lint
+        run: |
+        npm install
+        npm run lint
+
+  tsc:
+    name: Typescript compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
+      - name: Compile
+        run: |
+        npm install
+        npm run compile

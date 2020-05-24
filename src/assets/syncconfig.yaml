@@ -1,0 +1,236 @@
+###
+#  This is an initial config file for iKosak Sync Now extension.
+#  It contains all main etities to develop on any instanse.
+#  You can edit/extend it anytime and then trigger data reload.
+#  Check predefined config as it could be a good example for you.
+### 
+
+### 
+#  Structure description
+###
+#- folder: --> Name of the folder that would be created while syncing the config entity
+#  query: --> Encoded query for records to be synced
+#  table: --> Tablename
+#  key: --> Fieldname. Value contained in this field will define the filename
+#  fields: --> Array of field that should be synced
+#    - extension: --> file extension
+#      field_name: --> Fildname. Value defines file content
+#  subDirPattern: --> Pattern of subdirectories if needed
+
+---
+- folder: business_rules
+  query: ''
+  table: sys_script
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: '<collection>/<when>'
+
+- folder: script_includes
+  query: ''
+  table: sys_script_include
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+
+- folder: client_scripts
+  table: sys_script_client
+  query: sys_class_name=sys_script_client^active=true
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: '<table>/<type>'
+
+- folder: wizard_client_scripts
+  table: expert_script_client
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: '<type>'
+
+- folder: script_actions
+  table: sysevent_script_action
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: '<event_name>'
+
+- folder: style_sheets
+  table: content_css
+  key: name
+  fields:
+    - extension: css
+      field_name: style
+
+- folder: ui_actions
+  table: sys_ui_action
+  query: active=true
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: '<table>/client_<client>'
+
+- folder: ui_scripts
+  table: sys_ui_script
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+
+- folder: dynamic_content_blocks
+  table: content_block_programmatic
+  query: ''
+  key: name
+  fields:
+    - extension: xhtml
+      field_name: programmatic_content
+  subDirPattern: '<category>'
+
+- folder: email_templates
+  table: sysevent_email_template
+  query: ''
+  key: name
+  fields:
+    - extension: html
+      field_name: message_html
+  subDirPattern: '<collection>'
+
+- folder: fix_scripts
+  table: sys_script_fix
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+
+- folder: catalog_client_scripts
+  table: catalog_script_client
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: applies_to_<applies_to>/<sys_id>/<type>
+
+- folder: sys_web_service
+  table: sys_web_service
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+
+- folder: web_service_resources
+  table: sys_ws_operation
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: operation_script
+  subDirPattern: '<web_service_definition>'
+
+- folder: sp_widgets
+  table: sp_widget
+  query: 'true'
+  key: name
+  fields:
+    - extension: client.js
+      field_name: client_script
+    - extension: demo.json
+      field_name: demo_data
+    - extension: server.js
+      field_name: script
+    - extension: html
+      field_name: template
+    - extension: scss
+      field_name: css
+
+- folder: sp_header_footer
+  table: sp_header_footer
+  query: ''
+  key: name
+  fields:
+    - name: client.js
+      field_name: client_script
+    - name: demo.js
+      field_name: demo_data
+    - name: server.js
+      field_name: script
+    - extension: html
+      field_name: template
+    - extension: css
+      field_name: css
+  subDirPattern: servicenow_<servicenow>
+
+- folder: sp_providers
+  table: sp_angular_provider
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+  subDirPattern: '<type>'
+
+- folder: sp_css
+  table: sp_css
+  query: ''
+  key: name
+  fields:
+    - extension: css
+      field_name: css
+
+- folder: sp_ng_templates
+  table: sp_ng_template
+  query: ''
+  key: id
+  fields:
+    - extension: html
+      field_name: template
+  subDirPattern: '<sp_widget>'
+  
+- folder: sys_script_email
+  table: sys_script_email
+  query: ''
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+
+- folder: sysevent_email_action
+  table: sysevent_email_action
+  query: active=true
+  key: name
+  fields:
+    - extension: html
+      field_name: message_html
+    - extension: js
+      field_name: advanced_condition
+
+- folder: sysevent_in_email_action
+  table: sysevent_in_email_action
+  query: active=true
+  key: name
+  fields:
+    - extension: js
+      field_name: script
+
+- folder: sys_ui_page
+  table: sys_ui_page
+  query: ''
+  key: name
+  fields:
+    - extension: html
+      field_name: html
+    - extension: client_script.js
+      field_name: client_script
+    - extension: processing_script.js
+      field_name: processing_script
