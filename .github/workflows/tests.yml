@@ -1,5 +1,15 @@
 name: Tests
-on: [push, pull_request]
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '*.*'
+    paths-ignore:
+      - README.md
+
 jobs:
   lint:
     name: Eslint
