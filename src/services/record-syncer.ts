@@ -302,7 +302,7 @@ export class RecordSyncerService {
 		config: TableConfiguration,
 		folder: string
 	) {
-		const pathRegExp = new RegExp('[^a-zA-Z0-9-s/_()]', 'g');
+		const pathRegExp = new RegExp('[^a-zA-Z0-9\\s-+_()]', 'g');
 		const name = record[config.key];
 		let subDir = '';
 
