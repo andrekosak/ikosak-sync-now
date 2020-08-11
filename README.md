@@ -1,3 +1,4 @@
+[![Installations count](https://img.shields.io/visual-studio-marketplace/i/AndreKosak.ikosak-sync-now)](https://marketplace.visualstudio.com/items?itemName=AndreKosak.ikosak-sync-now) 
 
 The VSCode extension "iKosak Sync Now" synchronizes records with ServiceNow instances. Sync is done via REST protocol. Start syncing NOW records to the hard drive just after installing the extension. No other programs are required.
 
