@@ -30,7 +30,7 @@
 - folder: script_includes
   query: ''
   table: sys_script_include
-  key: name
+  key: api_name
   fields:
     - extension: js
       field_name: script
