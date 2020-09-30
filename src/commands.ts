@@ -12,6 +12,7 @@ import { showProgressBar } from './ui/notifications';
 import * as ui from './ui/promts';
 import { resyncTableDialog } from './ui/resync-table-dialog';
 import { ResyncButton, UploadButton } from './ui/statusbar-buttons';
+import { Logger } from './lib/logger';
 
 const uploadItem = new UploadButton();
 const resyncButton = new ResyncButton();
@@ -90,11 +91,15 @@ export function openInBrowser() {
 		ui.showErrorMessage("Can't find configuration for file.");
 		return;
 	}
-	const deeplink = `${base}/nav_to.do?uri=${config.table}.do?sys_id=${metaData.sysId}`;
+	const recordLink = `${base}/nav_to.do?uri=${config.table}.do?sys_id=${metaData.sysId}`;
+	// No need to parse
+	// const parsedURL = vscode.Uri.parse(recordLink);
+
+	Logger.info(`Going to open URL: ${recordLink}`);
 
 	// Dont know why .openExternal is not in type spec - using "ignore"
 	// @ts-ignore
-	vscode.env.openExternal(vscode.Uri.parse(deeplink));
+	vscode.env.openExternal(recordLink);
 }
 
 /**
