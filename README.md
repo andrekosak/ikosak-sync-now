@@ -8,11 +8,11 @@ Synced records are being saved as files in folder `./src`. You can edit them and
 
 - Work on records from ANY scope (including Global)
 - Synchronize NOW records to files on the hard drive
-- Easy to use YAML configuration file
 - Upload records to NOW via shortcut (CMD+k+j)
+- Select a code snippet to execute it on server, get a prompt result in a new window (CMD+k+p)
+- Easy to use YAML configuration file
 - Shows diffs if record has been changed on instance since pulled
 - Check if the record being uploaded belongs to same scope as current Update Set
-- Select a code snippet to execute it on server, get a prompt result in a new window
 - Written in Typescript with 🖤
 
 # Usage
@@ -26,9 +26,22 @@ Synced records are being saved as files in folder `./src`. You can edit them and
 5. Search for a file in `./src` folder. __For example, press `CMD+p` and search for "Caller Close" to find the Business rule "Caller Close" on incident table.__
 6. Once edited a file, use **CMD+k+j** (or Ctrl+k+j) shortcut to upload the updated record to the instance.
 
+# FAQ
+
+*I have created a new record in NOW. How do i get it to the editor?*
+
+You should use the **Pull a table** command and select the table you want to re-sync.
+
+*Why i cannot push the record to NOW?*
+
+There could be several reasons:
+- You have no internet
+- The record you are trying to edit is secured by system
+- VS code got stucked. Reload it.
+- The extension has a bug. Please [create an issue](https://github.com/andrekosak/ikosak-sync-now/issues) in Github.
+
 # Known restrictions
 
 * Only basic auth is supported. 2FA will be never suppoted. oAuth - coming soon.
 * There could be some issues for Windows users, as i am developing and testing mainly on macOS.
 * You cannot create and upload new records.
-* If you have created a new record in ServiceNow, you should proceed with "Pull all files.." command once again.
