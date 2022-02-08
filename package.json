@@ -106,6 +106,12 @@
                 "key": "ctrl+k ctrl+j",
                 "mac": "cmd+k cmd+j",
                 "when": "editorTextFocus"
+            },
+            {
+                "command": "ikosak-sync-now.openInBrowser",
+                "key": "ctrl+k ctrl+o",
+                "mac": "cmd+k cmd+o",
+                "when": "editorTextFocus"
             }
         ]
     },
