@@ -15,7 +15,7 @@ jobs:
           GITHUB_TAG: ${{ github.ref }}
         run: |
           export CURRENT_TAG=${GITHUB_TAG/refs\/tags\/v/}
-          echo "::set-env name=CURRENT_TAG::$CURRENT_TAG"
+          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
 
       - name: Set up Node 10
         uses: actions/setup-node@v1
