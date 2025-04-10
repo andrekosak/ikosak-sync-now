@@ -1,4 +1,4 @@
-import { error } from 'iconsole-logger';
+import { error, log } from 'iconsole-logger';
 import * as vscode from 'vscode';
 
 import { createInitSyncConfig } from './services/config';
@@ -13,7 +13,8 @@ import * as ui from './ui/promts';
 import { resyncTableDialog } from './ui/resync-table-dialog';
 import { ResyncButton, UploadButton } from './ui/statusbar-buttons';
 import { Logger } from './lib/logger';
-import { getExactCasePath } from './lib/filesystem';
+import { getExactCasePath, replaceFileContent } from './lib/filesystem';
+import { md5 } from './lib/md5';
 
 const uploadItem = new UploadButton();
 const resyncButton = new ResyncButton();
@@ -169,4 +170,89 @@ export async function resyncTable() {
 	ui.showInfoMessage(`Successfully pulled ${dialogState.pickedTableName}`);
 
 	progressBar.resolve?.();
+}
+
+/**
+ * Resync the current file with the remote version
+ */
+export async function resyncCurrentFile(): Promise<void> {
+	try {
+		if (!vscode.window.activeTextEditor) return;
+
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+			vscode.window.showErrorMessage('No file is currently open');
+			return;
+		}
+
+		const filePath = getExactCasePath(editor.document.uri.fsPath);
+		const currentContent = editor.document.getText();
+
+		// Show progress indicator
+		await vscode.window.withProgress(
+			{
+				location: vscode.ProgressLocation.Notification,
+				title: 'Syncing file with remote...',
+				cancellable: true,
+			},
+			async (progress) => {
+				// Retrieve the remote content
+				const remoteContent = await recordSyncer.fetchRemoteFileContent(
+					filePath
+				);
+
+				if (!remoteContent) {
+					vscode.window.showErrorMessage('Failed to fetch remote file content');
+					return;
+				}
+
+				// Compare local and remote content
+				if (currentContent === remoteContent) {
+					vscode.window.showInformationMessage(
+						'File is already in sync with remote version'
+					);
+					return;
+				}
+
+				// Show confirmation dialog if files differ
+				const action = await vscode.window.showWarningMessage(
+					'Local file differs from remote. Overwrite local file with remote content?',
+					'Yes',
+					'No',
+					'Show Diff'
+				);
+
+				if (action === 'Yes') {
+					// Overwrite local content with remote content
+					await replaceFileContent(editor, remoteContent);
+					// Save hash to metadata object in memory
+					const config = recordSyncer.getTableConfigurationFromFilePath(
+						filePath
+					);
+					if (!config) {
+						ui.showErrorMessage('File not recognized as SNOW record.');
+						return;
+					}
+
+					const fileMetaData = meta.getFileMetaData(config.folder, filePath);
+					if (fileMetaData) {
+						fileMetaData.hash = md5(remoteContent);
+					}
+					// Save metadasta to file system
+					meta.saveMetaData();
+
+					vscode.window.showInformationMessage(
+						'File successfully synced with remote version'
+					);
+				} else if (action === 'Show Diff') {
+					// Show diff view
+					ui.showDiffBetweenFileAndData(remoteContent, filePath);
+				}
+			}
+		);
+	} catch (err) {
+		error('Error resyncing file:', err);
+		const errorMessage = err instanceof Error ? err.message : String(err);
+		vscode.window.showErrorMessage(`Failed to resync file: ${errorMessage}`);
+	}
 }
