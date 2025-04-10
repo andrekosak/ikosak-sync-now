@@ -452,6 +452,48 @@ export class RecordSyncerService {
 			}, ms);
 		});
 	};
+
+	/**
+	 * Fetches the content of a file from remote server
+	 */
+	async fetchRemoteFileContent(filePath: string): Promise<string | undefined> {
+		try {
+			// Check if table configuration could be found
+			const config = this.getTableConfigurationFromFilePath(filePath);
+			if (!config) {
+				ui.showErrorMessage('File not recognized as SNOW record.');
+				return;
+			}
+
+			// Check file has been already synced to metadata
+			const fileMetaData = meta.getFileMetaData(config.folder, filePath);
+			if (!fileMetaData) {
+				Logger.info(
+					`Could not find metadata for the path: ${filePath} in folder ${config.folder}`
+				);
+				ui.showErrorMessage(
+					`File ${path.basename(filePath)} is not being tracked`
+				);
+				return;
+			}
+
+			// Use your existing service to fetch the remote content
+			const remoteRecord = await api.getSingleRecord(
+				config.table,
+				fileMetaData.sysId
+			);
+
+			const remoteFile = (remoteRecord[fileMetaData.field] as string).replace(
+				/\r\n/g,
+				'\n'
+			);
+
+			return remoteFile;
+		} catch (err) {
+			error('Error fetching remote content:', err);
+			return;
+		}
+	}
 }
 
 export const recordSyncer = new RecordSyncerService();

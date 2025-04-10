@@ -1,6 +1,6 @@
+import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { error } from 'iconsole-logger';
 
 /**
  * Create a folder with all parent folders
@@ -64,4 +64,22 @@ export function getExactCasePath(filePath: string): string {
 	}
 
 	return path.join(dir, exactName);
+}
+
+/**
+ * Replaces the content of the current file with the provided content
+ */
+export async function replaceFileContent(
+	editor: vscode.TextEditor,
+	newContent: string
+): Promise<boolean> {
+	const fullRange = new vscode.Range(
+		editor.document.positionAt(0),
+		editor.document.positionAt(editor.document.getText().length)
+	);
+
+	const edit = new vscode.WorkspaceEdit();
+	edit.replace(editor.document.uri, fullRange, newContent);
+
+	return vscode.workspace.applyEdit(edit);
 }

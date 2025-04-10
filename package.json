@@ -70,6 +70,11 @@
                 "category": "iKosak Sync"
             },
             {
+                "command": "ikosak-sync-now.resyncCurrentFile",
+                "title": "Pull remote content",
+                "category": "iKosak Sync"
+            },
+            {
                 "command": "ikosak-sync-now.runBackgroundScriptGlobal",
                 "title": "Run as background script (Global scope)",
                 "category": "iKosak Sync"

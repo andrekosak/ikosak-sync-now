@@ -55,6 +55,12 @@ function initCommands(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
+			'ikosak-sync-now.resyncCurrentFile',
+			commands.resyncCurrentFile
+		)
+	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
 			'ikosak-sync-now.uploadFile',
 			commands.uploadFile
 		)
