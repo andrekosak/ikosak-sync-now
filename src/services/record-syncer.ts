@@ -13,6 +13,7 @@ import { createInitSyncConfig } from './config';
 import { meta } from './meta';
 import { scopeService } from './scope';
 import { settings, syncConfigFilename } from './settings';
+import { Logger } from '../lib/logger';
 
 const process = require('process');
 
@@ -198,6 +199,7 @@ export class RecordSyncerService {
 			// Create folder
 			await files.mkdirp(folder);
 			log(`Got for ${config.table}: ${records.length} records`);
+			Logger.info(`Got for ${config.table}: ${records.length} records`);
 
 			// Loop all retrieved records and save to files
 			for (let i = 0; i < records.length; i++) {
@@ -230,7 +232,12 @@ export class RecordSyncerService {
 		// Check file has been alredy synced to metadata
 		const fileMetaData = meta.getFileMetaData(config.folder, filePath);
 		if (!fileMetaData) {
-			ui.showErrorMessage('File is not being tracked.');
+			Logger.info(
+				`Could not find metadata for the path: ${filePath} in folder ${config.folder}`
+			);
+			ui.showErrorMessage(
+				`File ${path.basename(filePath)} is not being tracked`
+			);
 			return false;
 		}
 
@@ -281,6 +288,9 @@ export class RecordSyncerService {
 			JSON.stringify(data)
 		);
 		vscode.window.showInformationMessage('Upload was successful ✅');
+		Logger.info(
+			`Successfully uploaded content of the file: ${path.basename(filePath)}`
+		);
 
 		// Save hash to metadata object in memory
 		fileMetaData.hash = md5(content);

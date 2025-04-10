@@ -13,6 +13,7 @@ import * as ui from './ui/promts';
 import { resyncTableDialog } from './ui/resync-table-dialog';
 import { ResyncButton, UploadButton } from './ui/statusbar-buttons';
 import { Logger } from './lib/logger';
+import { getExactCasePath } from './lib/filesystem';
 
 const uploadItem = new UploadButton();
 const resyncButton = new ResyncButton();
@@ -56,13 +57,16 @@ export async function uploadFile() {
 	if (!vscode.window.activeTextEditor) return;
 
 	uploadItem.startSpinner();
-	const path = vscode.window.activeTextEditor.document.uri.fsPath;
+	const filePath = getExactCasePath(
+		vscode.window.activeTextEditor.document.uri.fsPath
+	);
+
 	try {
-		await recordSyncer.uploadFile(path);
+		await recordSyncer.uploadFile(filePath);
 	} catch (e) {
 		error(e);
 		ui.showErrorMessage(
-			`Could not upload file ${path}. Error ${e.statusCode}. message: ${e.message}`
+			`Could not upload file ${filePath}. Error ${e.statusCode}. message: ${e.message}`
 		);
 	}
 	uploadItem.stopSpinner();

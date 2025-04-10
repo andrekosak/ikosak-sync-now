@@ -50,3 +50,18 @@ export function rmrf(directoryPath: string) {
 		// error(err);
 	}
 }
+
+export function getExactCasePath(filePath: string): string {
+	const dir = path.dirname(filePath);
+	const baseName = path.basename(filePath).toLowerCase(); // Case-insensitive match
+
+	// Read directory entries
+	const files = fs.readdirSync(dir);
+	const exactName = files.find((f) => f.toLowerCase() === baseName);
+
+	if (!exactName) {
+		throw new Error(`File not found: ${filePath}`);
+	}
+
+	return path.join(dir, exactName);
+}

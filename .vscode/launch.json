@@ -10,7 +10,6 @@
             "type": "extensionHost",
             "request": "launch",
             "sourceMaps": true,
-            "stopOnEntry": false,
             "runtimeExecutable": "${execPath}",
             "preLaunchTask": "tsc: watch - tsconfig-debug.json",
 			"outFiles": [
@@ -25,7 +24,6 @@
             "type": "extensionHost",
             "request": "launch",
             "sourceMaps": true,
-            "stopOnEntry": false,
             "runtimeExecutable": "${execPath}",
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
