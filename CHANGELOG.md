@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New command **Pull current file from instance** to allow users to pull the latest content from the remote server for the currently open file. Thanks to David #12. More than 3 years since issue has been created 🤯
+- New command **Pull current file from instance** to allow users to pull the latest content from the remote server for the currently open file. Thanks to David's issue #12. More than 3 years since issue has been created 🤯
 - Devcontainer configuration for VSCode extension development
 
 ### Fixed
