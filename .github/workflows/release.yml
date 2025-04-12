@@ -10,17 +10,15 @@ jobs:
     name: Create release
     runs-on: ubuntu-latest
     steps:
-      - name: Set tag version
-        env:
-          GITHUB_TAG: ${{ github.ref }}
+      - name: Get version from tag
+        id: tag_name
         run: |
-          export CURRENT_TAG=${GITHUB_TAG/refs\/tags\/v/}
-          echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+          echo "current_version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Set up Node 10
+      - name: Set up Node 16
         uses: actions/setup-node@v1
         with:
-          node-version: '10.x'
+          node-version: '16.x'
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -31,27 +29,26 @@ jobs:
           npm i
           npm run release
           echo "::set-output name=file::$(ls *.vsix)"
-          zip --junk-paths ikosak-sync-now_${{ env.CURRENT_TAG }}.zip *.vsix
+          zip --junk-paths ikosak-sync-now_${{ steps.tag_name.outputs.current_version }}.zip *.vsix
 
       - name: Get Changelog Entry
         id: changelog_reader
-        uses: mindsers/changelog-reader-action@v1.1.0
+        uses: mindsers/changelog-reader-action@v2
         with:
-          version: ${{ env.CURRENT_TAG }}
+          version: ${{ steps.tag_name.outputs.current_version }}
           path: ./CHANGELOG.md
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: ${{ steps.changelog_reader.outputs.log_entry }}
+          tag: ${{ steps.changelog_reader.outputs.version }}
+          name: Release ${{ steps.changelog_reader.outputs.version }}
+          body: ${{ steps.changelog_reader.outputs.changes }}
           draft: false
           prerelease: false
-
+          token: ${{ secrets.GITHUB_TOKEN }}
+  
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
@@ -59,8 +56,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./ikosak-sync-now_${{ env.CURRENT_TAG }}.zip
-          asset_name: ikosak-sync-now_${{ env.CURRENT_TAG }}.zip
+          asset_path: ./ikosak-sync-now_${{ steps.tag_name.outputs.current_version }}.zip
+          asset_name: ikosak-sync-now_${{ steps.tag_name.outputs.current_version }}.zip
           asset_content_type: application/zip
 
       - name: Upload Artifact
@@ -83,10 +80,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node 10
+      - name: Set up Node 16
         uses: actions/setup-node@master
         with:
-          node-version: 10.0.0
+          node-version: '16.x'
 
       - name: Download artifact
         uses: actions/download-artifact@v2
