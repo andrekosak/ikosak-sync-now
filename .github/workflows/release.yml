@@ -60,18 +60,6 @@ jobs:
           asset_name: ikosak-sync-now_${{ steps.tag_name.outputs.current_version }}.zip
           asset_content_type: application/zip
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: out
-          path: out/
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: vsix
-          path: ${{ steps.build.outputs.file }}
-
   publish:
     name: Publish to marketplace
     needs: [release]
