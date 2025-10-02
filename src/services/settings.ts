@@ -191,7 +191,10 @@ class SettingsService {
 					base64Credentials,
 					'base64'
 				).toString('utf8');
-				const [username, password] = credentials_str.split(':');
+				// Split only on the first colon to handle passwords containing colons
+				const colonIndex = credentials_str.indexOf(':');
+				const username = credentials_str.substring(0, colonIndex);
+				const password = credentials_str.substring(colonIndex + 1);
 
 				if (username && password) {
 					// Store in secure storage
