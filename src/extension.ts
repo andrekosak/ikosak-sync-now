@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { log, print } from 'iconsole-logger';
 import * as commands from './commands';
 import { IKOSAK_INIT } from './init';
+import { credentials } from './services/credentials';
 
 // This method is called when your extension is activated. Activation is
 // controlled by activation events defined in package.json.
@@ -11,6 +12,7 @@ import { IKOSAK_INIT } from './init';
  */
 export function activate(context: vscode.ExtensionContext) {
 	log(`Activation started`);
+	credentials.initialize(context);
 	IKOSAK_INIT.init();
 	commands.initializeStatusBarItems();
 	initCommands(context);

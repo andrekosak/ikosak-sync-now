@@ -36,7 +36,7 @@ class ScriptsBackground {
 	}
 
 	async executeOnServer(script: string, ckToken: string, scope = 'global') {
-		const options: Request.Options = getOptions('/sys.scripts.do', {
+		const options: Request.Options = await getOptions('/sys.scripts.do', {
 			method: 'POST',
 		});
 		options.form = {
@@ -54,7 +54,7 @@ class ScriptsBackground {
 	 * Gets value if hidden <input> tag with ck token
 	 */
 	async getCkToken() {
-		const options = getOptions('/sys.scripts.do');
+		const options = await getOptions('/sys.scripts.do');
 		const body = await request(options);
 		const bodyHtml = cheerio.load(body);
 		return bodyHtml('input[name="sysparm_ck"]').attr('value');

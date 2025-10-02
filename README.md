@@ -40,6 +40,17 @@ There could be several reasons:
 - VS code got stucked. Reload it.
 - The extension has a bug. Please [create an issue](https://github.com/andrekosak/ikosak-sync-now/issues) in Github.
 
+# Security
+
+Your credentials are stored securely using OS-native secure storage:
+- **macOS**: Credentials are stored in the system Keychain
+- **Windows**: Credentials are stored in the Credential Manager
+- **Linux**: Credentials are stored using the Secret Service API (gnome-keyring or similar)
+
+This ensures your password is never written to a file on disk, providing enhanced security for your ServiceNow credentials.
+
+**Note**: When upgrading from an older version, your existing credentials will be automatically migrated from file-based storage to secure storage on first launch.
+
 # Known restrictions
 
 * Only basic auth is supported. 2FA will be never suppoted. oAuth - coming soon.

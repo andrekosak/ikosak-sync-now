@@ -145,7 +145,7 @@ export async function executeScriptCurrentScope() {
  */
 export async function enterAuthData() {
 	const inputState = await multiStepLogin();
-	settings.updateAuthData(
+	await settings.updateAuthData(
 		inputState.instance,
 		inputState.username,
 		inputState.password

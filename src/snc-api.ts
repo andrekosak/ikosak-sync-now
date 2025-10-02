@@ -18,7 +18,7 @@ export async function executeScriptAPIRequest(
 	body = ''
 ) {
 	try {
-		const options = getOptions(endpoint, parameters);
+		const options = await getOptions(endpoint, parameters);
 		options.body = body;
 		const resp = await request(options);
 		const data = JSON.parse(resp);
@@ -38,7 +38,7 @@ export async function getRecordsForTable(
 	tableName: string,
 	parameters: NowApiProperties = {}
 ): Promise<any[]> {
-	const options = createRequestOptionsForTableAPI(tableName, parameters);
+	const options = await createRequestOptionsForTableAPI(tableName, parameters);
 	const resp = JSON.parse(await request(options));
 	return resp.result;
 }
@@ -54,7 +54,7 @@ export async function getSingleRecord(
 	sysId: string,
 	fields = ''
 ): Promise<NowRecord> {
-	const options = createRequestOptionsForTableAPI(tableName, {
+	const options = await createRequestOptionsForTableAPI(tableName, {
 		sysId,
 		fields,
 	});
@@ -73,7 +73,7 @@ export async function updateRecord(
 	sysId: string,
 	body = ''
 ) {
-	const options = createRequestOptionsForTableAPI(tableName, {
+	const options = await createRequestOptionsForTableAPI(tableName, {
 		sysId,
 		method: 'PUT',
 	});
@@ -100,12 +100,12 @@ function generateUrl(tableName: string, sysId = '') {
  * @param tableName Table name to create request for
  * @param parameters Parameters for the request
  */
-function createRequestOptionsForTableAPI(
+async function createRequestOptionsForTableAPI(
 	tableName: string,
 	parameters: NowApiProperties
 ) {
 	const url = generateUrl(tableName, parameters.sysId);
-	const options = getOptions(url, parameters);
+	const options = await getOptions(url, parameters);
 	// const defaultQuery = '^sys_policy!=protected^ORsys_policy=';
 	options.qs = {
 		sysparm_query: parameters.query || '',

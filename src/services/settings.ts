@@ -4,6 +4,7 @@ import * as path from 'path';
 import { log } from 'iconsole-logger';
 import * as yaml from 'js-yaml';
 import * as ui from '../ui/promts';
+import { credentials } from './credentials';
 const pkg: any = require('./../../package.json');
 
 export const legacyConfigDir = '.snsync',
@@ -24,10 +25,11 @@ class SettingsService {
 			);
 			return;
 		}
+		// Note: initialization will complete asynchronously
 		this.intialize();
 	}
 
-	intialize() {
+	async intialize() {
 		this.loadConfigFile();
 		if (this.hasLegacyConfig()) {
 			this.saveConfigToFile();
@@ -35,6 +37,7 @@ class SettingsService {
 		if (this.hasLegacySettingsFile()) {
 			this.saveConfigToFile();
 		}
+		await this.migrateCredentialsToSecureStorage();
 	}
 
 	loadConfigFile() {
@@ -58,7 +61,6 @@ class SettingsService {
 		}
 
 		this.ConfigObj = {
-			connect_basic_auth: '',
 			connect_instance_label: '',
 			connect_instance_url: '',
 		};
@@ -84,8 +86,11 @@ class SettingsService {
 			// invalidate cache
 			delete require.cache[require.resolve(filePath)];
 			const legacyConfig = require(filePath);
-			// this.ConfigObj.connect_basic_auth = settings.auth.match(/Basic (.+)/)[1];
-			this.ConfigObj.connect_basic_auth = legacyConfig.auth;
+			// Store the legacy auth temporarily for migration
+			// We'll migrate it in migrateCredentialsToSecureStorage
+			if (legacyConfig.auth) {
+				(this.ConfigObj as any)._legacy_basic_auth = legacyConfig.auth;
+			}
 			fs.unlinkSync(filePath);
 			return true;
 		}
@@ -133,17 +138,82 @@ class SettingsService {
 	}
 
 	/**
-	 * Update authentication data for SNOW. User+Password combination will be turned into
-	 * 	a Base64 encoded Basic Auth Header
+	 * Update authentication data for SNOW. Credentials are stored in secure storage.
 	 * @param {username: string, password: string} params Parameters to encode
 	 * @return {void}
 	 */
-	updateAuthData(instance: string, username: string, password: string) {
-		this.ConfigObj.connect_basic_auth =
-			'Basic ' + new Buffer(username + ':' + password).toString('base64');
+	async updateAuthData(instance: string, username: string, password: string) {
 		this.ConfigObj.connect_instance_label = instance;
 		this.ConfigObj.connect_instance_url = `https://${instance}.service-now.com`;
+		await credentials.storeCredentials(instance, username, password);
 		this.saveConfigToFile();
+	}
+
+	/**
+	 * Get the basic auth header from secure storage
+	 * @return {Promise<string | undefined>} Basic auth header or undefined if not found
+	 */
+	async getBasicAuth(): Promise<string | undefined> {
+		const instance = this.config.connect_instance_label;
+		if (!instance) {
+			return undefined;
+		}
+		return credentials.getBasicAuth(instance);
+	}
+
+	/**
+	 * Migrate credentials from file-based storage to secure storage
+	 * This runs on first initialization after upgrade
+	 */
+	async migrateCredentialsToSecureStorage() {
+		const instance = this.config.connect_instance_label;
+		if (!instance) {
+			return;
+		}
+
+		// Check if credentials already exist in secure storage
+		const existingUsername = await credentials.getUsername(instance);
+		if (existingUsername) {
+			// Already migrated
+			return;
+		}
+
+		// Check for legacy basic auth in config (from old config.yaml file)
+		const legacyAuth = (this.ConfigObj as any).connect_basic_auth;
+		const tempLegacyAuth = (this.ConfigObj as any)._legacy_basic_auth;
+		const basicAuthToMigrate = legacyAuth || tempLegacyAuth;
+
+		if (basicAuthToMigrate) {
+			try {
+				// Decode the basic auth header
+				const base64Credentials = basicAuthToMigrate.replace('Basic ', '');
+				const credentials_str = Buffer.from(
+					base64Credentials,
+					'base64'
+				).toString('utf8');
+				const [username, password] = credentials_str.split(':');
+
+				if (username && password) {
+					// Store in secure storage
+					await credentials.storeCredentials(instance, username, password);
+					log(
+						`Migrated credentials for instance ${instance} to secure storage`
+					);
+
+					// Remove from config object
+					delete (this.ConfigObj as any).connect_basic_auth;
+					delete (this.ConfigObj as any)._legacy_basic_auth;
+
+					// Save config without the auth data
+					this.saveConfigToFile();
+					ui.showInfoMessage(
+						'Password has been migrated to secure storage (Keychain/Credential Manager)'
+					);
+				}
+			} catch (err) {
+				log(`Error migrating credentials: ${err}`);
+			}
+		}
 	}
 
 	/**
@@ -222,6 +292,5 @@ export const settings = new SettingsService();
 
 interface Config {
 	connect_instance_url: string;
-	connect_basic_auth: string;
 	connect_instance_label: string;
 }
