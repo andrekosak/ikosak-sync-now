@@ -13,6 +13,7 @@ import * as ui from './ui/promts';
 import { resyncTableDialog } from './ui/resync-table-dialog';
 import { ResyncButton, UploadButton } from './ui/statusbar-buttons';
 import { Logger } from './lib/logger';
+import { getErrorMessage, getErrorCode } from './lib/error-utils';
 import { getExactCasePath, replaceFileContent } from './lib/filesystem';
 import { md5 } from './lib/md5';
 
@@ -67,7 +68,7 @@ export async function uploadFile() {
 	} catch (e) {
 		error(e);
 		ui.showErrorMessage(
-			`Could not upload file ${filePath}. Error ${e.statusCode}. message: ${e.message}`
+			`Could not upload file ${filePath}. Error ${getErrorCode(e)}. message: ${getErrorMessage(e)}`
 		);
 	}
 	uploadItem.stopSpinner();
@@ -121,7 +122,7 @@ export async function executeScriptGlobal() {
 	try {
 		await backgroundScript.execute();
 	} catch (err) {
-		error(err.message);
+		error(getErrorMessage(err));
 	}
 }
 
@@ -136,7 +137,7 @@ export async function executeScriptCurrentScope() {
 		await backgroundScript.execute(scopeService.currentScope);
 	} catch (err) {
 		ui.showErrorMessage(`Script could not be executed (internal error)`);
-		error(err.message);
+		error(getErrorMessage(err));
 	}
 }
 
@@ -252,7 +253,6 @@ export async function resyncCurrentFile(): Promise<void> {
 		);
 	} catch (err) {
 		error('Error resyncing file:', err);
-		const errorMessage = err instanceof Error ? err.message : String(err);
-		vscode.window.showErrorMessage(`Failed to resync file: ${errorMessage}`);
+		vscode.window.showErrorMessage(`Failed to resync file: ${getErrorMessage(err)}`);
 	}
 }

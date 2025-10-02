@@ -5,7 +5,9 @@ import { log } from 'iconsole-logger';
 import * as yaml from 'js-yaml';
 import * as ui from '../ui/promts';
 import { credentials } from './credentials';
-const pkg: any = require('./../../package.json');
+import { getErrorMessage } from '../lib/error-utils';
+interface PackageInfo { name?: string; displayName?: string }
+const pkg = require('./../../package.json') as PackageInfo;
 
 export const legacyConfigDir = '.snsync',
 	configDir = '.snconfig',
@@ -54,7 +56,7 @@ class SettingsService {
 				return;
 			} catch (e) {
 				ui.showErrorMessage(
-					`Error while loading config file ${configFile}: ${e.message}`
+					`Error while loading config file ${configFile}: ${getErrorMessage(e)}`
 				);
 				return;
 			}
@@ -213,12 +215,12 @@ class SettingsService {
 						'Password has been migrated to secure storage (Keychain/Credential Manager)'
 					);
 				}
-			} catch (err) {
-				log(`Error migrating credentials: ${err}`);
+			} catch (e) {
+				const ex: any = e;
+				log(`Error migrating credentials: ${ex}`);
 			}
 		}
 	}
-
 	/**
 	 * Get the path to the current workspace
 	 * @return {string}

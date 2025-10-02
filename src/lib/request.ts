@@ -1,6 +1,11 @@
 import { settings } from '../services/settings';
 import * as r from 'request-promise-native';
 
+interface RequestParams {
+	method?: string;
+	[key: string]: unknown;
+}
+
 // TODO: Create a generic method that would catch errors
 
 class Request {
@@ -16,9 +21,9 @@ class Request {
 	});
 	constructor() {}
 
-	static async getRequestOptions(
+	static async getRequestOptions<T extends { method?: string } = { method?: string }>(
 		url: string,
-		params: any = {}
+		params: T = {} as T
 	): Promise<r.Options> {
 		/**
 		 * Read configs before each request
