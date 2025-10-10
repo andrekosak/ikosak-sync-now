@@ -79,4 +79,10 @@ function initCommands(context: vscode.ExtensionContext, commands: any) {
 			commands.openInBrowser
 		)
 	);
+	context.subscriptions.push(
+		vscode.commands.registerCommand(
+			'ikosak-sync-now.deleteCredentials',
+			commands.deleteCredentialsCommand
+		)
+	);
 }

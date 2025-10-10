@@ -75,6 +75,11 @@
                 "category": "iKosak Sync"
             },
             {
+                "command": "ikosak-sync-now.deleteCredentials",
+                "title": "Delete stored credentials for current instance",
+                "category": "iKosak Sync"
+            },
+            {
                 "command": "ikosak-sync-now.runBackgroundScriptGlobal",
                 "title": "Run as background script (Global scope)",
                 "category": "iKosak Sync"

@@ -10,6 +10,7 @@ import { settings } from './services/settings';
 import { multiStepLogin } from './ui/multiStepLogin';
 import { showProgressBar } from './ui/notifications';
 import * as ui from './ui/promts';
+import { credentials } from './services/credentials';
 import { resyncTableDialog } from './ui/resync-table-dialog';
 import { ResyncButton, UploadButton } from './ui/statusbar-buttons';
 import { Logger } from './lib/logger';
@@ -254,5 +255,37 @@ export async function resyncCurrentFile(): Promise<void> {
 	} catch (err) {
 		error('Error resyncing file:', err);
 		vscode.window.showErrorMessage(`Failed to resync file: ${getErrorMessage(err)}`);
+	}
+}
+
+/**
+ * Delete stored credentials for the current instance
+ */
+export async function deleteCredentialsCommand() {
+	const instanceUrl = settings.currentInstance.url;
+	const instanceLabel = settings.currentInstance.label || instanceUrl;
+
+	if (!instanceUrl) {
+		return ui.showErrorMessage('No instance is configured.');
+	}
+
+	const confirmed = await ui.askYesNoQuestion(
+		`Are you sure you want to delete stored credentials for ${instanceLabel}?`
+	);
+
+	if (!confirmed) return;
+
+	try {
+		await credentials.deleteCredentials(instanceUrl);
+	// Clear saved instance info from config via public API
+	await settings.clearInstance();
+
+		ui.showInfoMessage('Credentials deleted for instance');
+		// update UI elements that show instance info
+		resyncButton.updateText();
+	} catch (err) {
+		// eslint-disable-next-line no-console
+		console.error('Failed to delete credentials', err);
+		ui.showErrorMessage('Failed to delete credentials (see console)');
 	}
 }

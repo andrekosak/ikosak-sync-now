@@ -86,6 +86,15 @@ class SettingsService {
 	}
 
 	/**
+	 * Clear configured instance URL and label and persist the config
+	 */
+	async clearInstance(): Promise<void> {
+		this.ConfigObj.connect_instance_url = '';
+		this.ConfigObj.connect_instance_label = '';
+		this.saveConfigToFile();
+	}
+
+	/**
 	 * Get the current instance
 	 * @return {Instance}
 	 */
