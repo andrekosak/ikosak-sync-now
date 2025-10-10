@@ -39,7 +39,7 @@ export async function multiStepLogin() {
 	 */
 	async function collectInputs() {
 		const state = {
-			instance: settings.currentInstance.label,
+			instance: settings.currentInstance.url || '',
 		} as Partial<State>;
 		await MultiStepInput.run((input) => inputInstance(input, state));
 		return state as State;
@@ -53,13 +53,11 @@ export async function multiStepLogin() {
 			step: 1,
 			totalSteps: 3,
 			value: state.instance || '',
-			prompt: 'Enter NOW instance name (Example: dev00001)',
+			prompt:
+				'Enter ServiceNow instance URL (Example: https://dev00001.service-now.com)',
 			validate: validateSncInstance,
 			shouldResume,
 		});
-		// if (pick instanceof MyButton) {
-		// 	return (input: MultiStepInput) => inputResourceGroupName(input, state);
-		// }
 		state.instance = instanceNameInput;
 		return (input: MultiStepInput) => inputUsername(input, state);
 	}
@@ -100,10 +98,7 @@ export async function multiStepLogin() {
 	 * @param name
 	 */
 	async function validateSncInstance(name: string) {
-		// await new Promise(resolve => setTimeout(resolve, 1000));
 		if (!name) return 'Mandatory input';
-		if (/[^a-z0-9]/.test(name))
-			return 'Should be only lower-case chars and numbers';
 		return undefined;
 	}
 

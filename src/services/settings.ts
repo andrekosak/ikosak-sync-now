@@ -5,6 +5,7 @@ import { log } from 'iconsole-logger';
 import * as yaml from 'js-yaml';
 import * as ui from '../ui/promts';
 import { credentials } from './credentials';
+import { migrateCredentialsToSecureStorage as migrateCredentialsUtil } from './settings-utils';
 import { getErrorMessage } from '../lib/error-utils';
 interface PackageInfo {
 	name?: string;
@@ -34,7 +35,11 @@ class SettingsService {
 
 	async intialize() {
 		this.loadConfigFile();
-		await this.migrateCredentialsToSecureStorage();
+		// Run migration via util so it can be removed easily in future versions
+		await migrateCredentialsUtil(
+			this.ConfigObj,
+			this.saveConfigToFile.bind(this)
+		);
 	}
 
 	loadConfigFile() {
@@ -96,10 +101,23 @@ class SettingsService {
 	 * @param {username: string, password: string} params Parameters to encode
 	 * @return {void}
 	 */
-	async updateAuthData(instance: string, username: string, password: string) {
-		this.ConfigObj.connect_instance_label = instance;
-		this.ConfigObj.connect_instance_url = `https://${instance}.service-now.com`;
-		await credentials.storeCredentials(instance, username, password);
+	async updateAuthData(
+		instanceUrl: string,
+		username: string,
+		password: string
+	) {
+		// capture whatever comes after the protocol and before the first dot
+		// e.g. https://SUBDOMAIN.example.com -> captures 'SUBDOMAIN'
+		const match = instanceUrl.match(/^https?:\/\/([^./]+)\./i);
+		this.ConfigObj.connect_instance_label = match
+			? match[1]
+			: instanceUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+		this.ConfigObj.connect_instance_url = instanceUrl;
+		await credentials.storeCredentials(
+			this.ConfigObj.connect_instance_url,
+			username,
+			password
+		);
 		this.saveConfigToFile();
 	}
 
@@ -108,7 +126,7 @@ class SettingsService {
 	 * @return {Promise<string | undefined>} Basic auth header or undefined if not found
 	 */
 	async getBasicAuth(): Promise<string | undefined> {
-		const instance = this.config.connect_instance_label;
+		const instance = this.config.connect_instance_url;
 		if (!instance) {
 			return undefined;
 		}
@@ -119,59 +137,12 @@ class SettingsService {
 	 * Migrate credentials from file-based storage to secure storage
 	 * This runs on first initialization after upgrade
 	 */
+	// Migration logic moved to settings-utils.ts
 	async migrateCredentialsToSecureStorage() {
-		const instance = this.config.connect_instance_label;
-		if (!instance) {
-			return;
-		}
-
-		// Check if credentials already exist in secure storage
-		const existingUsername = await credentials.getUsername(instance);
-		if (existingUsername) {
-			// Already migrated
-			return;
-		}
-
-		// Check for legacy basic auth in config (from old config.yaml file)
-		const legacyAuth = (this.ConfigObj as any).connect_basic_auth;
-		const tempLegacyAuth = (this.ConfigObj as any)._legacy_basic_auth;
-		const basicAuthToMigrate = legacyAuth || tempLegacyAuth;
-
-		if (basicAuthToMigrate) {
-			try {
-				// Decode the basic auth header
-				const base64Credentials = basicAuthToMigrate.replace('Basic ', '');
-				const credentials_str = Buffer.from(
-					base64Credentials,
-					'base64'
-				).toString('utf8');
-				// Split only on the first colon to handle passwords containing colons
-				const colonIndex = credentials_str.indexOf(':');
-				const username = credentials_str.substring(0, colonIndex);
-				const password = credentials_str.substring(colonIndex + 1);
-
-				if (username && password) {
-					// Store in secure storage
-					await credentials.storeCredentials(instance, username, password);
-					log(
-						`Migrated credentials for instance ${instance} to secure storage`
-					);
-
-					// Remove from config object
-					delete (this.ConfigObj as any).connect_basic_auth;
-					delete (this.ConfigObj as any)._legacy_basic_auth;
-
-					// Save config without the auth data
-					this.saveConfigToFile();
-					ui.showInfoMessage(
-						'Password has been migrated to secure storage (Keychain/Credential Manager)'
-					);
-				}
-			} catch (e) {
-				const ex: any = e;
-				log(`Error migrating credentials: ${ex}`);
-			}
-		}
+		return migrateCredentialsUtil(
+			this.ConfigObj,
+			this.saveConfigToFile.bind(this)
+		);
 	}
 	/**
 	 * Get the path to the current workspace
@@ -227,7 +198,7 @@ class SettingsService {
 	 * @param {string} filePath Path to file
 	 * @param {string} data Data to write to file
 	 * @return {void}
-	*/
+	 */
 	private static writeFileOrCreate(filePath: string, data: string) {
 		const dir = path.dirname(filePath);
 		try {
