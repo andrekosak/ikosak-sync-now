@@ -6,7 +6,10 @@ import * as yaml from 'js-yaml';
 import * as ui from '../ui/promts';
 import { credentials } from './credentials';
 import { getErrorMessage } from '../lib/error-utils';
-interface PackageInfo { name?: string; displayName?: string }
+interface PackageInfo {
+	name?: string;
+	displayName?: string;
+}
 const pkg = require('./../../package.json') as PackageInfo;
 
 export const legacyConfigDir = '.snsync',
@@ -33,12 +36,6 @@ class SettingsService {
 
 	async intialize() {
 		this.loadConfigFile();
-		if (this.hasLegacyConfig()) {
-			this.saveConfigToFile();
-		}
-		if (this.hasLegacySettingsFile()) {
-			this.saveConfigToFile();
-		}
 		await this.migrateCredentialsToSecureStorage();
 	}
 
@@ -75,49 +72,6 @@ class SettingsService {
 
 	get config(): Partial<Config> {
 		return this.ConfigObj;
-	}
-
-	/**
-	 * Read settings from file
-	 */
-	hasLegacySettingsFile() {
-		const workspacePath = SettingsService.getWorkSpacePath();
-
-		const filePath = path.resolve(workspacePath, legacyConfigDir, settingsFile);
-		if (fs.existsSync(filePath)) {
-			// invalidate cache
-			delete require.cache[require.resolve(filePath)];
-			const legacyConfig = require(filePath);
-			// Store the legacy auth temporarily for migration
-			// We'll migrate it in migrateCredentialsToSecureStorage
-			if (legacyConfig.auth) {
-				(this.ConfigObj as any)._legacy_basic_auth = legacyConfig.auth;
-			}
-			fs.unlinkSync(filePath);
-			return true;
-		}
-		return;
-	}
-
-	hasLegacyConfig() {
-		const legacyConfigFile = 'instances.json';
-		const fPath = path.resolve(
-			this.getProjectConfigDirPath(),
-			legacyConfigFile
-		);
-		if (fs.existsSync(fPath)) {
-			const instanceData = require(fPath);
-			// Check if value is defined and has property length
-			if (!instanceData || !instanceData.length) {
-				return;
-			}
-			this.ConfigObj.connect_instance_url = instanceData[0].url;
-			this.ConfigObj.connect_instance_label = instanceData[0].display;
-
-			fs.unlinkSync(fPath);
-			return true;
-		}
-		return;
 	}
 
 	saveConfigToFile() {
