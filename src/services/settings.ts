@@ -122,10 +122,16 @@ class SettingsService {
 	}
 
 	/**
-	 * Get the basic auth header from secure storage
+	 * Get the basic auth header from secure storage or legacy config
 	 * @return {Promise<string | undefined>} Basic auth header or undefined if not found
 	 */
 	async getBasicAuth(): Promise<string | undefined> {
+		// Check if legacy basic auth is configured (bypasses SecretStorage)
+		if (this.config.connect_basic_auth_legacy) {
+			return this.config.connect_basic_auth_legacy;
+		}
+
+		// Otherwise, use SecretStorage
 		const instance = this.config.connect_instance_url;
 		if (!instance) {
 			return undefined;
@@ -215,4 +221,5 @@ export const settings = new SettingsService();
 interface Config {
 	connect_instance_url: string;
 	connect_instance_label: string;
+	connect_basic_auth_legacy?: string;
 }

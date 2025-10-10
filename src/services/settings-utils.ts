@@ -18,6 +18,12 @@ export async function migrateCredentialsToSecureStorage(
 		return;
 	}
 
+	// Skip migration if legacy basic auth is configured (user wants to bypass SecretStorage)
+	if (configObj.connect_basic_auth_legacy) {
+		log('Skipping migration - connect_basic_auth_legacy is configured');
+		return;
+	}
+
 	// Check if credentials already exist in secure storage
 	const existingUsername = await credentials.getUsername(instance);
 	if (existingUsername) {
