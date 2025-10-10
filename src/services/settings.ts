@@ -4,13 +4,18 @@ import * as path from 'path';
 import { log } from 'iconsole-logger';
 import * as yaml from 'js-yaml';
 import * as ui from '../ui/promts';
-const pkg: any = require('./../../package.json');
+import { credentials } from './credentials';
+import { migrateCredentialsToSecureStorage as migrateCredentialsUtil } from './settings-utils';
+import { getErrorMessage } from '../lib/error-utils';
+interface PackageInfo {
+	name?: string;
+	displayName?: string;
+}
+const pkg = require('./../../package.json') as PackageInfo;
 
-export const legacyConfigDir = '.snsync',
-	configDir = '.snconfig',
-	settingsFile = 'config.json',
-	configFile = `config.yaml`,
-	sourcesDirPath = `src`;
+export const configDir = '.snconfig';
+const configFile = `config.yaml`;
+const sourcesDirPath = `src`;
 export const metaFileName = `metadata.json`;
 export const syncConfigFilename = `syncconfig`;
 
@@ -24,17 +29,17 @@ class SettingsService {
 			);
 			return;
 		}
+		// Note: initialization will complete asynchronously
 		this.intialize();
 	}
 
-	intialize() {
+	async intialize() {
 		this.loadConfigFile();
-		if (this.hasLegacyConfig()) {
-			this.saveConfigToFile();
-		}
-		if (this.hasLegacySettingsFile()) {
-			this.saveConfigToFile();
-		}
+		// Run migration via util so it can be removed easily in future versions
+		await migrateCredentialsUtil(
+			this.ConfigObj,
+			this.saveConfigToFile.bind(this)
+		);
 	}
 
 	loadConfigFile() {
@@ -51,14 +56,13 @@ class SettingsService {
 				return;
 			} catch (e) {
 				ui.showErrorMessage(
-					`Error while loading config file ${configFile}: ${e.message}`
+					`Error while loading config file ${configFile}: ${getErrorMessage(e)}`
 				);
 				return;
 			}
 		}
 
 		this.ConfigObj = {
-			connect_basic_auth: '',
 			connect_instance_label: '',
 			connect_instance_url: '',
 		};
@@ -73,52 +77,21 @@ class SettingsService {
 		return this.ConfigObj;
 	}
 
-	/**
-	 * Read settings from file
-	 */
-	hasLegacySettingsFile() {
-		const workspacePath = SettingsService.getWorkSpacePath();
-
-		const filePath = path.resolve(workspacePath, legacyConfigDir, settingsFile);
-		if (fs.existsSync(filePath)) {
-			// invalidate cache
-			delete require.cache[require.resolve(filePath)];
-			const legacyConfig = require(filePath);
-			// this.ConfigObj.connect_basic_auth = settings.auth.match(/Basic (.+)/)[1];
-			this.ConfigObj.connect_basic_auth = legacyConfig.auth;
-			fs.unlinkSync(filePath);
-			return true;
-		}
-		return;
-	}
-
-	hasLegacyConfig() {
-		const legacyConfigFile = 'instances.json';
-		const fPath = path.resolve(
-			this.getProjectConfigDirPath(),
-			legacyConfigFile
-		);
-		if (fs.existsSync(fPath)) {
-			const instanceData = require(fPath);
-			// Check if value is defined and has property length
-			if (!instanceData || !instanceData.length) {
-				return;
-			}
-			this.ConfigObj.connect_instance_url = instanceData[0].url;
-			this.ConfigObj.connect_instance_label = instanceData[0].display;
-
-			fs.unlinkSync(fPath);
-			return true;
-		}
-		return;
-	}
-
 	saveConfigToFile() {
 		const configDir = this.getProjectConfigDirPath();
 		const configPath = path.resolve(configDir, `${configFile}`);
 		fs.writeFileSync(configPath, yaml.safeDump(this.config), {
 			encoding: 'utf8',
 		});
+	}
+
+	/**
+	 * Clear configured instance URL and label and persist the config
+	 */
+	async clearInstance(): Promise<void> {
+		this.ConfigObj.connect_instance_url = '';
+		this.ConfigObj.connect_instance_label = '';
+		this.saveConfigToFile();
 	}
 
 	/**
@@ -133,19 +106,59 @@ class SettingsService {
 	}
 
 	/**
-	 * Update authentication data for SNOW. User+Password combination will be turned into
-	 * 	a Base64 encoded Basic Auth Header
+	 * Update authentication data for SNOW. Credentials are stored in secure storage.
 	 * @param {username: string, password: string} params Parameters to encode
 	 * @return {void}
 	 */
-	updateAuthData(instance: string, username: string, password: string) {
-		this.ConfigObj.connect_basic_auth =
-			'Basic ' + new Buffer(username + ':' + password).toString('base64');
-		this.ConfigObj.connect_instance_label = instance;
-		this.ConfigObj.connect_instance_url = `https://${instance}.service-now.com`;
+	async updateAuthData(
+		instanceUrl: string,
+		username: string,
+		password: string
+	) {
+		// capture whatever comes after the protocol and before the first dot
+		// e.g. https://SUBDOMAIN.example.com -> captures 'SUBDOMAIN'
+		const match = instanceUrl.match(/^https?:\/\/([^./]+)\./i);
+		this.ConfigObj.connect_instance_label = match
+			? match[1]
+			: instanceUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+		this.ConfigObj.connect_instance_url = instanceUrl;
+		await credentials.storeCredentials(
+			this.ConfigObj.connect_instance_url,
+			username,
+			password
+		);
 		this.saveConfigToFile();
 	}
 
+	/**
+	 * Get the basic auth header from secure storage or legacy config
+	 * @return {Promise<string | undefined>} Basic auth header or undefined if not found
+	 */
+	async getBasicAuth(): Promise<string | undefined> {
+		// Check if legacy basic auth is configured (bypasses SecretStorage)
+		if (this.config.connect_basic_auth_legacy) {
+			return this.config.connect_basic_auth_legacy;
+		}
+
+		// Otherwise, use SecretStorage
+		const instance = this.config.connect_instance_url;
+		if (!instance) {
+			return undefined;
+		}
+		return credentials.getBasicAuth(instance);
+	}
+
+	/**
+	 * Migrate credentials from file-based storage to secure storage
+	 * This runs on first initialization after upgrade
+	 */
+	// Migration logic moved to settings-utils.ts
+	async migrateCredentialsToSecureStorage() {
+		return migrateCredentialsUtil(
+			this.ConfigObj,
+			this.saveConfigToFile.bind(this)
+		);
+	}
 	/**
 	 * Get the path to the current workspace
 	 * @return {string}
@@ -184,12 +197,6 @@ class SettingsService {
 		return dirPath;
 	}
 
-	getLegacyDirPath() {
-		const workspacePath = SettingsService.getWorkSpacePath();
-		const dirPath = path.resolve(workspacePath, legacyConfigDir);
-		return dirPath;
-	}
-
 	/**
 	 * Get the path for the workspace's hidden project configuration folder
 	 * This folder should store configuration that is checked into git on a per-project basis
@@ -207,7 +214,7 @@ class SettingsService {
 	 * @param {string} data Data to write to file
 	 * @return {void}
 	 */
-	static writeFileOrCreate(filePath: string, data: string) {
+	private static writeFileOrCreate(filePath: string, data: string) {
 		const dir = path.dirname(filePath);
 		try {
 			fs.mkdirSync(dir);
@@ -222,6 +229,6 @@ export const settings = new SettingsService();
 
 interface Config {
 	connect_instance_url: string;
-	connect_basic_auth: string;
 	connect_instance_label: string;
+	connect_basic_auth_legacy?: string;
 }

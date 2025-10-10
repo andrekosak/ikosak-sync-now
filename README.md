@@ -40,6 +40,31 @@ There could be several reasons:
 - VS code got stucked. Reload it.
 - The extension has a bug. Please [create an issue](https://github.com/andrekosak/ikosak-sync-now/issues) in Github.
 
+# Security
+
+Your credentials are stored securely using OS-native secure storage:
+- **macOS**: Credentials are stored in the system Keychain
+- **Windows**: Credentials are stored in the Credential Manager
+- **Linux**: Credentials are stored using the Secret Service API (gnome-keyring or similar)
+
+This ensures your password is never written to a file on disk, providing enhanced security for your ServiceNow credentials.
+
+**Note**: When upgrading from an older version, your existing credentials will be automatically migrated from file-based storage to secure storage on first launch.
+
+## Legacy Basic Auth (Advanced)
+
+If you prefer to bypass the secure storage mechanism and use basic auth directly from the config file (for example, in automated environments or CI/CD pipelines), you can add the `connect_basic_auth_legacy` attribute to your `.snconfig/config.yaml` file:
+
+```yaml
+connect_instance_url: https://your-instance.service-now.com
+connect_instance_label: your-instance
+connect_basic_auth_legacy: Basic dXNlcm5hbWU6cGFzc3dvcmQ=
+```
+
+The value should be a Base64-encoded string in the format `Basic <base64(username:password)>`.
+
+**Warning**: This approach stores credentials in plain text (Base64 is encoding, not encryption) and should only be used in secure environments where you understand the security implications. The secure storage method is strongly recommended for regular development work.
+
 # Known restrictions
 
 * Only basic auth is supported. 2FA will be never suppoted. oAuth - coming soon.

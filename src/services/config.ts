@@ -23,7 +23,7 @@ export const createInitSyncConfig = () => {
 			encoding: 'utf8',
 		});
 		showInfoMessage(
-			`Check your default sync config at ${configDir}/${configFileName}`
+			`A default config has been created at ${configDir}/${configFileName}`
 		);
 	} catch (err) {
 		error(err);

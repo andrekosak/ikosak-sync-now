@@ -14,6 +14,11 @@ import { meta } from './meta';
 import { scopeService } from './scope';
 import { settings, syncConfigFilename } from './settings';
 import { Logger } from '../lib/logger';
+import {
+	getErrorMessage,
+	getErrorCode,
+	isUnauthorized,
+} from '../lib/error-utils';
 
 const process = require('process');
 
@@ -51,7 +56,7 @@ export class RecordSyncerService {
 			} catch (e) {
 				this.configLoadError = `Error while loading sync config file ${
 					syncConfigFilename + '.yaml'
-				}: ${e.message}`;
+				}: ${getErrorMessage(e)}`;
 				ui.showErrorMessage(this.configLoadError);
 			}
 		} else {
@@ -74,7 +79,7 @@ export class RecordSyncerService {
 			} catch (e) {
 				this.configLoadError = `Error while loading config file ${
 					syncConfigFilename + '.json'
-				}: ${e.message}`;
+				}: ${getErrorMessage(e)}`;
 				ui.showErrorMessage(this.configLoadError);
 			}
 		}
@@ -129,10 +134,10 @@ export class RecordSyncerService {
 			}
 			progressBar.resolve?.();
 		} catch (err) {
-			if (err.statusCode === 401) {
+			if (isUnauthorized(err)) {
 				ui.showNotAuthenticatedMessage();
 			} else {
-				ui.showErrorMessage('Error:' + err.message);
+				ui.showErrorMessage('Error: ' + getErrorMessage(err));
 			}
 		} finally {
 			// Resolve progress bar if still there
@@ -446,7 +451,7 @@ export class RecordSyncerService {
 	}
 
 	static setPromiseTimeout = async function (ms: number) {
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve) => {
 			global.setTimeout(() => {
 				resolve();
 			}, ms);
@@ -461,7 +466,7 @@ export class RecordSyncerService {
 			// Check if table configuration could be found
 			const config = this.getTableConfigurationFromFilePath(filePath);
 			if (!config) {
-				ui.showErrorMessage('File not recognized as SNOW record.');
+				ui.showErrorMessage('File not recognized as ServiceNow record.');
 				return;
 			}
 

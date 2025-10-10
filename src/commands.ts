@@ -10,9 +10,11 @@ import { settings } from './services/settings';
 import { multiStepLogin } from './ui/multiStepLogin';
 import { showProgressBar } from './ui/notifications';
 import * as ui from './ui/promts';
+import { credentials } from './services/credentials';
 import { resyncTableDialog } from './ui/resync-table-dialog';
 import { ResyncButton, UploadButton } from './ui/statusbar-buttons';
 import { Logger } from './lib/logger';
+import { getErrorMessage, getErrorCode } from './lib/error-utils';
 import { getExactCasePath, replaceFileContent } from './lib/filesystem';
 import { md5 } from './lib/md5';
 
@@ -67,7 +69,9 @@ export async function uploadFile() {
 	} catch (e) {
 		error(e);
 		ui.showErrorMessage(
-			`Could not upload file ${filePath}. Error ${e.statusCode}. message: ${e.message}`
+			`Could not upload file ${filePath}. Error ${getErrorCode(
+				e
+			)}. message: ${getErrorMessage(e)}`
 		);
 	}
 	uploadItem.stopSpinner();
@@ -121,7 +125,7 @@ export async function executeScriptGlobal() {
 	try {
 		await backgroundScript.execute();
 	} catch (err) {
-		error(err.message);
+		error(getErrorMessage(err));
 	}
 }
 
@@ -136,7 +140,7 @@ export async function executeScriptCurrentScope() {
 		await backgroundScript.execute(scopeService.currentScope);
 	} catch (err) {
 		ui.showErrorMessage(`Script could not be executed (internal error)`);
-		error(err.message);
+		error(getErrorMessage(err));
 	}
 }
 
@@ -145,7 +149,7 @@ export async function executeScriptCurrentScope() {
  */
 export async function enterAuthData() {
 	const inputState = await multiStepLogin();
-	settings.updateAuthData(
+	await settings.updateAuthData(
 		inputState.instance,
 		inputState.username,
 		inputState.password
@@ -252,7 +256,40 @@ export async function resyncCurrentFile(): Promise<void> {
 		);
 	} catch (err) {
 		error('Error resyncing file:', err);
-		const errorMessage = err instanceof Error ? err.message : String(err);
-		vscode.window.showErrorMessage(`Failed to resync file: ${errorMessage}`);
+		vscode.window.showErrorMessage(
+			`Failed to resync file: ${getErrorMessage(err)}`
+		);
+	}
+}
+
+/**
+ * Delete stored credentials for the current instance
+ */
+export async function deleteCredentialsCommand() {
+	const instanceUrl = settings.currentInstance.url;
+	const instanceLabel = settings.currentInstance.label || instanceUrl;
+
+	if (!instanceUrl) {
+		return ui.showErrorMessage('No instance is configured.');
+	}
+
+	const confirmed = await ui.askYesNoQuestion(
+		`Are you sure you want to delete stored credentials for ${instanceLabel}?`
+	);
+
+	if (!confirmed) return;
+
+	try {
+		await credentials.deleteCredentials(instanceUrl);
+		// Clear saved instance info from config via public API
+		await settings.clearInstance();
+
+		ui.showInfoMessage('Credentials deleted for instance');
+		// update UI elements that show instance info
+		resyncButton.updateText();
+	} catch (err) {
+		// eslint-disable-next-line no-console
+		console.error('Failed to delete credentials', err);
+		ui.showErrorMessage('Failed to delete credentials (see console)');
 	}
 }

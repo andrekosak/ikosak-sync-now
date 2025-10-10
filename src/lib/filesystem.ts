@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { getErrorCode } from './error-utils';
 
 /**
  * Create a folder with all parent folders
@@ -10,10 +11,11 @@ export function mkdirp(directoryPath: string) {
 	try {
 		fs.mkdirSync(directoryPath);
 	} catch (err) {
-		if (err.code === 'EEXIST') {
+		const code = getErrorCode(err);
+		if (code === 'EEXIST') {
 			return;
 		}
-		if (['EACCES', 'EPERM', 'EISDIR'].indexOf(err.code) > -1) {
+		if (['EACCES', 'EPERM', 'EISDIR'].indexOf(String(code)) > -1) {
 			throw new Error(`Permission denied, ${path}`);
 		}
 		// Make parent path

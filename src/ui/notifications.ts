@@ -12,7 +12,7 @@ import {
 	Progress,
 } from 'vscode';
 
-type ResolveFunction = () => void;
+type ResolveFunction = (value?: unknown) => void;
 
 export const showProgressBar = function (title: string, cancellable = true) {
 	let rProgress: undefined | Progress<{ message?: string; increment?: number }>,
