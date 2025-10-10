@@ -14,7 +14,11 @@ import { meta } from './meta';
 import { scopeService } from './scope';
 import { settings, syncConfigFilename } from './settings';
 import { Logger } from '../lib/logger';
-import { getErrorMessage, getErrorCode, isUnauthorized } from '../lib/error-utils';
+import {
+	getErrorMessage,
+	getErrorCode,
+	isUnauthorized,
+} from '../lib/error-utils';
 
 const process = require('process');
 

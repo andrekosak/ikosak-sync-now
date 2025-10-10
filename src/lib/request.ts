@@ -21,10 +21,9 @@ class Request {
 	});
 	constructor() {}
 
-	static async getRequestOptions<T extends { method?: string } = { method?: string }>(
-		url: string,
-		params: T = {} as T
-	): Promise<r.Options> {
+	static async getRequestOptions<
+		T extends { method?: string } = { method?: string }
+	>(url: string, params: T = {} as T): Promise<r.Options> {
 		/**
 		 * Read configs before each request
 		 */

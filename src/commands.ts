@@ -69,7 +69,9 @@ export async function uploadFile() {
 	} catch (e) {
 		error(e);
 		ui.showErrorMessage(
-			`Could not upload file ${filePath}. Error ${getErrorCode(e)}. message: ${getErrorMessage(e)}`
+			`Could not upload file ${filePath}. Error ${getErrorCode(
+				e
+			)}. message: ${getErrorMessage(e)}`
 		);
 	}
 	uploadItem.stopSpinner();
@@ -254,7 +256,9 @@ export async function resyncCurrentFile(): Promise<void> {
 		);
 	} catch (err) {
 		error('Error resyncing file:', err);
-		vscode.window.showErrorMessage(`Failed to resync file: ${getErrorMessage(err)}`);
+		vscode.window.showErrorMessage(
+			`Failed to resync file: ${getErrorMessage(err)}`
+		);
 	}
 }
 
@@ -277,8 +281,8 @@ export async function deleteCredentialsCommand() {
 
 	try {
 		await credentials.deleteCredentials(instanceUrl);
-	// Clear saved instance info from config via public API
-	await settings.clearInstance();
+		// Clear saved instance info from config via public API
+		await settings.clearInstance();
 
 		ui.showInfoMessage('Credentials deleted for instance');
 		// update UI elements that show instance info
