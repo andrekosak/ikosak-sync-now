@@ -12,11 +12,9 @@ interface PackageInfo {
 }
 const pkg = require('./../../package.json') as PackageInfo;
 
-export const legacyConfigDir = '.snsync',
-	configDir = '.snconfig',
-	settingsFile = 'config.json',
-	configFile = `config.yaml`,
-	sourcesDirPath = `src`;
+export const configDir = '.snconfig';
+const configFile = `config.yaml`;
+const sourcesDirPath = `src`;
 export const metaFileName = `metadata.json`;
 export const syncConfigFilename = `syncconfig`;
 
@@ -213,12 +211,6 @@ class SettingsService {
 		return dirPath;
 	}
 
-	getLegacyDirPath() {
-		const workspacePath = SettingsService.getWorkSpacePath();
-		const dirPath = path.resolve(workspacePath, legacyConfigDir);
-		return dirPath;
-	}
-
 	/**
 	 * Get the path for the workspace's hidden project configuration folder
 	 * This folder should store configuration that is checked into git on a per-project basis
@@ -235,8 +227,8 @@ class SettingsService {
 	 * @param {string} filePath Path to file
 	 * @param {string} data Data to write to file
 	 * @return {void}
-	 */
-	static writeFileOrCreate(filePath: string, data: string) {
+	*/
+	private static writeFileOrCreate(filePath: string, data: string) {
 		const dir = path.dirname(filePath);
 		try {
 			fs.mkdirSync(dir);

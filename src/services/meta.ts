@@ -7,37 +7,13 @@ import { metaFileName, settings } from './settings';
 
 const configDir = settings.getConfigDirPath();
 const metaFilePath = path.resolve(configDir, metaFileName);
-const legacyMetaFilePath = path.resolve(
-	settings.getLegacyDirPath(),
-	metaFileName
-);
 
 class MetaService {
 	_metadata: Metadata = { files: {}, apps: [], filesCount: 0 };
 	globals: KosGlobals = {};
 	constructor() {
 		this.loadMetaData();
-		// Temporary solution to migrate legacy config
-		if (this.hasLegacyMetaData()) {
-			this.saveMetaData();
-		}
 		log('MetaService created');
-	}
-
-	/**
-	 * Check for legacy metadata file and migrate if needed
-	 */
-	hasLegacyMetaData() {
-		if (fs.existsSync(legacyMetaFilePath)) {
-			try {
-				this._metadata = require(legacyMetaFilePath);
-				fs.unlinkSync(legacyMetaFilePath);
-			} catch (err) {
-				error('hasLegacyMetaData funtion failed with: ', err);
-			}
-			return true;
-		}
-		return false;
 	}
 
 	/**
