@@ -462,7 +462,7 @@ export class RecordSyncerService {
 			// Check if table configuration could be found
 			const config = this.getTableConfigurationFromFilePath(filePath);
 			if (!config) {
-				ui.showErrorMessage('File not recognized as SNOW record.');
+				ui.showErrorMessage('File not recognized as ServiceNow record.');
 				return;
 			}
 

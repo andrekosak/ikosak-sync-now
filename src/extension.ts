@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
 import { log, print } from 'iconsole-logger';
-import * as commands from './commands';
-import { IKOSAK_INIT } from './init';
 import { credentials } from './services/credentials';
 
 // This method is called when your extension is activated. Activation is
@@ -10,15 +8,23 @@ import { credentials } from './services/credentials';
  *
  * @param {*} context
  */
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	log(`Activation started`);
+	// Initialize credentials (SecretStorage) first so any services that rely on it
+	// won't throw during module initialization.
 	credentials.initialize(context);
-	IKOSAK_INIT.init();
+
+	// Defer importing modules that create SettingsService or otherwise access
+	// SecretStorage until after credentials.initialize has run.
+	const initMod = await import('./init');
+	const commands = await import('./commands');
+
+	initMod.IKOSAK_INIT.init();
 	commands.initializeStatusBarItems();
-	initCommands(context);
+	initCommands(context, commands);
 }
 
-function initCommands(context: vscode.ExtensionContext) {
+function initCommands(context: vscode.ExtensionContext, commands: any) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(
 			'ikosak-sync-now.runBackgroundScriptGlobal',
