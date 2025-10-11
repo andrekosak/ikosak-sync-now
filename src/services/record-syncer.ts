@@ -122,13 +122,17 @@ export class RecordSyncerService {
 					message: msg,
 				});
 
+				const startTime = process.hrtime();
 				// Resync a table
 				try {
 					await this.resyncData(this._config[index]);
 				} catch (err) {
+					const endTime = process.hrtime(startTime);
 					error(err);
 					ui.showErrorMessage(
-						`Error while resyncing table ${this._config[index].table}`
+						`Error after ${endTime[0]}s while resyncing table ${
+							this._config[index].table
+						}: ${getErrorMessage(err)}`
 					);
 				}
 			}
@@ -184,14 +188,26 @@ export class RecordSyncerService {
 	 */
 	async resyncData(config: TableConfiguration) {
 		try {
-			// Try to avoid macOS error "ENFILE: file table overflow"
-			// see http://blog.mact.me/2014/10/22/yosemite-upgrade-changes-open-file-limit
-			// await RecordSyncerService.setPromiseTimeout(200);
-
 			meta.clearFolderMetaData(config.folder);
-			const records = await api.getRecordsForTable(config.table, {
+
+			const recordsCount = await api.getRecordsCount(config.table, {
 				query: config.query,
 			});
+			if (recordsCount === 0) {
+				log(`No records found for table ${config.table}`);
+				return;
+			}
+			Logger.info(
+				`Going to sync ${recordsCount} records for table ${config.table}`
+			);
+
+			const records = await api.getRecordsForTable(
+				config.table,
+				{
+					query: config.query,
+				},
+				recordsCount
+			);
 
 			// Delete folder if still there
 			const folder = path.resolve(settings.getSourceDirPath(), config.folder);
@@ -449,14 +465,6 @@ export class RecordSyncerService {
 	get config() {
 		return this._config;
 	}
-
-	static setPromiseTimeout = async function (ms: number) {
-		return new Promise<void>((resolve) => {
-			global.setTimeout(() => {
-				resolve();
-			}, ms);
-		});
-	};
 
 	/**
 	 * Fetches the content of a file from remote server

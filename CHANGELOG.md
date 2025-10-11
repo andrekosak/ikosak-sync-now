@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2025-10-11
+
+### Added
+
+- New config option `records_threshold` to control paging size when pulling records
+  from ServiceNow table API
+  - Place it in `.snconfig/config.yaml` as a top-level numeric value
+  - Default: `500` when not configured or set to an invalid value
+  - When set to a positive integer, `getRecordsForTable` will page results using
+    `sysparm_limit` equal to this value and iterate using `sysparm_offset` until
+    all records are fetched. This is useful for tuning performance or avoiding
+    server limits on large tables.
+
 ## [1.3.0] - 2025-10-10
 
 ### Added

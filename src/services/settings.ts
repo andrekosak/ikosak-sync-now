@@ -227,8 +227,11 @@ class SettingsService {
 
 export const settings = new SettingsService();
 
-interface Config {
+export interface Config {
 	connect_instance_url: string;
 	connect_instance_label: string;
 	connect_basic_auth_legacy?: string;
+	// When present, limits page size used by table API pagination in snc-api
+	// Default when absent is 500
+	records_threshold?: number;
 }

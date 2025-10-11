@@ -1,10 +1,7 @@
-import * as vscode from 'vscode';
 import { log, error } from 'iconsole-logger';
 import { request, getOptions } from './lib/request';
-
-// Read workspace settings
-// TODO: should be used in next release
-const config = vscode.workspace.getConfiguration('ikosak-sync-now');
+import { sleep } from './lib/utils';
+import { settings, Config } from './services/settings';
 
 /**
  * Get response of Scripted Rest API Request
@@ -21,6 +18,7 @@ export async function executeScriptAPIRequest(
 		const options = await getOptions(endpoint, parameters);
 		options.body = body;
 		const resp = await request(options);
+		await sleep(100);
 		const data = JSON.parse(resp);
 		return { status: resp.statusCode, result: data.result };
 	} catch (err) {
@@ -36,11 +34,58 @@ export async function executeScriptAPIRequest(
  */
 export async function getRecordsForTable(
 	tableName: string,
-	parameters: NowApiProperties = {}
+	parameters: NowApiProperties = {},
+	// Optional total records count — when provided and greater than threshold,
+	// the function will page through results using n-record pages.
+	recordsCount?: number
 ): Promise<any[]> {
-	const options = await createRequestOptionsForTableAPI(tableName, parameters);
-	const resp = JSON.parse(await request(options));
-	return resp.result;
+	// Default threshold for paging through table API results. Can be overridden
+	// by adding `records_threshold: <number>` to your `.snconfig/config.yaml`.
+	const DEFAULT_THRESHOLD = 500;
+	const sConfig = settings && (settings.config as Config);
+	const cfg = (sConfig && sConfig.records_threshold) || DEFAULT_THRESHOLD;
+	const THRESHOLD = Number(cfg) > 0 ? Number(cfg) : DEFAULT_THRESHOLD;
+
+	// If no pagination needed, perform single request as before
+	if (!recordsCount || recordsCount <= THRESHOLD) {
+		const options = await createRequestOptionsForTableAPI(
+			tableName,
+			parameters
+		);
+		const raw = await request(options);
+		await sleep(100);
+		const resp = JSON.parse(raw);
+		return resp.result;
+	}
+
+	// Page through results in chunks of THRESHOLD using sysparm_limit and sysparm_offset
+	const pages = Math.ceil(recordsCount / THRESHOLD);
+	const results: any[] = [];
+
+	for (let i = 0; i < pages; i++) {
+		const offset = i * THRESHOLD;
+		const pageParams: NowApiProperties = {
+			...parameters,
+			limit: THRESHOLD,
+			offset,
+		};
+
+		const options = await createRequestOptionsForTableAPI(
+			tableName,
+			pageParams
+		);
+		const respRaw = await request(options);
+		await sleep(100);
+		const resp = JSON.parse(respRaw);
+
+		if (resp && Array.isArray(resp.result)) {
+			results.push(...resp.result);
+		} else if (resp && resp.result) {
+			results.push(resp.result);
+		}
+	}
+
+	return results;
 }
 
 /**
@@ -58,7 +103,9 @@ export async function getSingleRecord(
 		sysId,
 		fields,
 	});
-	const resp = JSON.parse(await request(options));
+	const raw = await request(options);
+	await sleep(100);
+	const resp = JSON.parse(raw);
 	return resp.result;
 }
 
@@ -78,8 +125,64 @@ export async function updateRecord(
 		method: 'PUT',
 	});
 	options.body = body;
-	const resp = JSON.parse(await request(options));
+	const raw = await request(options);
+	await sleep(100);
+	const resp = JSON.parse(raw);
 	return resp.result;
+}
+
+/**
+ * Get number of records in a table matching optional query using ServiceNow Stats API
+ * Returns numeric count (0 on error).
+ * @param tableName Table name to count records for
+ * @param parameters Optional NowApiProperties - supports `query`
+ */
+export async function getRecordsCount(
+	tableName: string,
+	parameters: NowApiProperties = {}
+): Promise<number> {
+	try {
+		// Use the Stats API which is the recommended way to get counts
+		const url = `/api/now/stats/${tableName}`;
+		const options = await getOptions(url, parameters);
+		options.qs = {
+			sysparm_query: parameters.query || '',
+			sysparm_count: true,
+		};
+
+		const raw = await request(options);
+		await sleep(100);
+		const resp = JSON.parse(raw);
+
+		// Handle several possible response shapes returned by ServiceNow or helpers
+		// 1) resp.result is a number
+		if (typeof resp.result === 'number') {
+			return resp.result;
+		}
+
+		// 2) resp.result may be an object with stats.count as string
+		if (resp.result && typeof resp.result === 'object') {
+			if (resp.result.stats && resp.result.stats.count !== undefined) {
+				// stats.count can be string or number
+				const v = resp.result.stats.count;
+				return typeof v === 'number' ? v : parseInt(String(v), 10) || 0;
+			}
+			// 3) resp.result.count
+			if (resp.result.count !== undefined) {
+				const v = resp.result.count;
+				return typeof v === 'number' ? v : parseInt(String(v), 10) || 0;
+			}
+			// 4) resp.result may be an array of records (fallback)
+			if (Array.isArray(resp.result)) {
+				return resp.result.length;
+			}
+		}
+
+		return 0;
+	} catch (err) {
+		error(err);
+		return 0;
+	}
 }
 
 /**
@@ -111,6 +214,7 @@ async function createRequestOptionsForTableAPI(
 		sysparm_query: parameters.query || '',
 		sysparm_fields: injectSystemFields(parameters.fields || ''),
 		sysparm_limit: parameters.limit || 10000,
+		sysparm_offset: parameters.offset || 0,
 		sysparm_display_value: parameters.displayValue || false,
 	};
 	return options;
@@ -141,6 +245,7 @@ interface NowApiProperties {
 	fields?: string;
 	displayValue?: 'all' | boolean;
 	limit?: number;
+	offset?: number;
 	sysId?: string;
 	method?: string;
 }
