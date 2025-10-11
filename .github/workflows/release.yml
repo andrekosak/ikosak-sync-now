@@ -28,7 +28,9 @@ jobs:
         run: |
           npm i
           npm run release
-          echo "::set-output name=file::$(ls *.vsix)"
+          # Use the new environment file for outputs instead of the deprecated ::set-output
+          # See: https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
+          echo "file=$(ls *.vsix)" >> $GITHUB_OUTPUT
           zip --junk-paths ikosak-sync-now_${{ steps.tag_name.outputs.current_version }}.zip *.vsix
 
       - name: Get Changelog Entry
