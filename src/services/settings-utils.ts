@@ -18,9 +18,14 @@ export async function migrateCredentialsToSecureStorage(
 		return;
 	}
 
-	// Skip migration if legacy basic auth is configured (user wants to bypass SecretStorage)
-	if (configObj.connect_basic_auth_legacy) {
-		log('Skipping migration - connect_basic_auth_legacy is configured');
+	// Skip migration if config-based auth is configured (user wants to bypass SecretStorage)
+	if (
+		configObj.connect_instance_user_token ||
+		configObj.connect_instance_cookie ||
+		configObj.connect_instance_bearer ||
+		configObj.connect_basic_auth_legacy
+	) {
+		log('Skipping migration - config-based auth is configured');
 		return;
 	}
 

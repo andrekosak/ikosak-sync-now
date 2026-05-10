@@ -29,15 +29,13 @@ class Request {
 		 */
 		await settings.intialize();
 
-		const basicAuth = await settings.getBasicAuth();
+		const authHeaders = await settings.getInstanceAuthHeaders();
 
 		return {
 			url: settings.currentInstance.url + url,
 			method: params.method || 'GET',
 			body: '',
-			headers: {
-				Authorization: basicAuth || '',
-			},
+			headers: authHeaders,
 			qs: {},
 		};
 	}

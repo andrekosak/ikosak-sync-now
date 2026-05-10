@@ -65,6 +65,9 @@ class SettingsService {
 		this.ConfigObj = {
 			connect_instance_label: '',
 			connect_instance_url: '',
+			connect_instance_bearer: '',
+			connect_instance_user_token: '',
+			connect_instance_cookie: '',
 		};
 		// There is no config - create a new file
 		SettingsService.writeFileOrCreate(
@@ -149,6 +152,35 @@ class SettingsService {
 	}
 
 	/**
+	 * Get authentication headers for instance API requests
+	 * @return {Promise<Record<string, string>>} Authentication headers
+	 */
+	async getInstanceAuthHeaders(): Promise<Record<string, string>> {
+		const userToken = this.config.connect_instance_user_token?.trim();
+		const cookie = this.config.connect_instance_cookie?.trim();
+		if (userToken || cookie) {
+			const headers: Record<string, string> = {};
+			if (userToken) {
+				headers['X-UserToken'] = userToken;
+			}
+			if (cookie) {
+				headers.Cookie = cookie;
+			}
+			return headers;
+		}
+
+		const bearer = this.config.connect_instance_bearer?.trim();
+		if (bearer) {
+			return {
+				Authorization: /^Bearer\s+/i.test(bearer) ? bearer : `Bearer ${bearer}`,
+			};
+		}
+
+		const basicAuth = await this.getBasicAuth();
+		return basicAuth ? { Authorization: basicAuth } : {};
+	}
+
+	/**
 	 * Migrate credentials from file-based storage to secure storage
 	 * This runs on first initialization after upgrade
 	 */
@@ -230,6 +262,9 @@ export const settings = new SettingsService();
 export interface Config {
 	connect_instance_url: string;
 	connect_instance_label: string;
+	connect_instance_bearer?: string;
+	connect_instance_user_token?: string;
+	connect_instance_cookie?: string;
 	connect_basic_auth_legacy?: string;
 	// When present, limits page size used by table API pagination in snc-api
 	// Default when absent is 500

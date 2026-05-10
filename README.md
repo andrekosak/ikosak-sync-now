@@ -20,7 +20,7 @@ Synced records are being saved as files in folder `./src`. You can edit them and
 [Watch video guide (3 min)](https://youtu.be/Tvexo9GNAuA) how to get started or follow the description.
 
 1. Create an empty folder to sync with a NOW instance. Open this folder in VSCode.
-2. Search for the command "Login to instance" to launch the extension and start authentication.
+2. Search for the command "Login to instance" to launch the extension and enter the connection details.
 3. Once entered login data, check the config located at `./snconfig/syncconfig.yaml` to define tables, queries, naming of the files to be synced. Default config includes most useful data for a developer.
 4. Click on instance name in bottom left corner of VS Code to start pulling data.
 5. Search for a file in `./src` folder. __For example, press `CMD+p` and search for "Caller Close" to find the Business rule "Caller Close" on incident table.__
@@ -42,31 +42,9 @@ There could be several reasons:
 
 # Security
 
-Your credentials are stored securely using OS-native secure storage:
-- **macOS**: Credentials are stored in the system Keychain
-- **Windows**: Credentials are stored in the Credential Manager
-- **Linux**: Credentials are stored using the Secret Service API (gnome-keyring or similar)
-
-This ensures your password is never written to a file on disk, providing enhanced security for your ServiceNow credentials.
-
-**Note**: When upgrading from an older version, your existing credentials will be automatically migrated from file-based storage to secure storage on first launch.
-
-## Legacy Basic Auth (Advanced)
-
-If you prefer to bypass the secure storage mechanism and use basic auth directly from the config file (for example, in automated environments or CI/CD pipelines), you can add the `connect_basic_auth_legacy` attribute to your `.snconfig/config.yaml` file:
-
-```yaml
-connect_instance_url: https://your-instance.service-now.com
-connect_instance_label: your-instance
-connect_basic_auth_legacy: Basic dXNlcm5hbWU6cGFzc3dvcmQ=
-```
-
-The value should be a Base64-encoded string in the format `Basic <base64(username:password)>`.
-
-**Warning**: This approach stores credentials in plain text (Base64 is encoding, not encryption) and should only be used in secure environments where you understand the security implications. The secure storage method is strongly recommended for regular development work.
+See the [authentication guide](docs/AUTHENTICATION.md) for credential storage, supported authentication options, and related configuration parameters.
 
 # Known restrictions
 
-* Only basic auth is supported. 2FA will be never suppoted. oAuth - coming soon.
 * There could be some issues for Windows users, as i am developing and testing mainly on macOS.
 * You cannot create and upload new records.

@@ -70,6 +70,10 @@ You can also use online Base64 encoders, but **be aware of security implications
 
 ## Behavior
 
+If `connect_instance_user_token` or `connect_instance_cookie` is configured, those ServiceNow session headers take precedence over bearer auth, `connect_basic_auth_legacy`, and secure storage for instance requests.
+
+If `connect_instance_bearer` is configured, bearer auth takes precedence over `connect_basic_auth_legacy` and secure storage for instance requests.
+
 When `connect_basic_auth_legacy` is configured:
 
 1. The extension will use this value for authentication instead of querying the secure storage
