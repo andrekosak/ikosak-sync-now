@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-05-10
+
+### Added
+
+- Added clearer authentication guidance, including documented options for secure
+  SecretStorage-backed credentials and legacy basic auth configuration.
+- Added advanced authentication config options for bearer tokens and cookies:
+  `connect_instance_bearer` sends a bearer `Authorization` header, and
+  `connect_instance_cookie` sends ServiceNow session cookies as the `Cookie`
+  header.
+- Added explicit status bar command names and identifiers for the upload and
+  resync actions, improving how those actions appear and behave in VS Code.
+
+### Changed
+
+- Centralized extension logging through the local console wrapper backed by
+  `iconsole-logger`, keeping logging behavior consistent across services.
+
+### Fixed
+
+- Improved ServiceNow API response error handling so failed requests surface more
+  useful diagnostic details.
+- Updated the release workflow to write GitHub Actions outputs through the
+  current environment file mechanism.
+
 ## [1.3.1] - 2025-10-11
 
 ### Added
