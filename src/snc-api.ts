@@ -1,7 +1,120 @@
 import { log, error } from './lib/console';
-import { request, getOptions } from './lib/request';
+import { Logger } from './lib/logger';
+import { request, getOptions, RequestOptions } from './lib/request';
+import { getErrorMessage } from './lib/error-utils';
 import { sleep } from './lib/utils';
 import { settings, Config } from './services/settings';
+
+const RESPONSE_PREVIEW_LENGTH = 4000;
+
+interface DebuggableError extends Error {
+	cause?: unknown;
+	responsePreview?: string;
+}
+
+function parseApiResponse<T>(
+	raw: string,
+	methodName: string,
+	options?: RequestOptions
+): T {
+	try {
+		return JSON.parse(raw) as T;
+	} catch (err) {
+		const callSite = getCallSiteForMethod(methodName);
+		const parseError = new Error(
+			`${methodName} failed. ${getErrorMessage(
+				err
+			)}. ServiceNow response was not valid JSON. See Debug Console for response preview.`
+		) as DebuggableError;
+
+		parseError.cause = err;
+		parseError.responsePreview = getResponsePreview(raw);
+
+		logInvalidJsonResponse(methodName, callSite, options, raw, err);
+
+		throw parseError;
+	}
+}
+
+function logInvalidJsonResponse(
+	methodName: string,
+	callSite: string | undefined,
+	options: RequestOptions | undefined,
+	raw: string,
+	err: unknown
+) {
+	const responsePreview = getResponsePreview(raw);
+	const lines = [
+		'[iKosak Sync Now] ServiceNow API response was not valid JSON.',
+		`Method call: ${methodName}`,
+		`Call site: ${callSite || 'unknown'}`,
+		`Request: ${formatRequest(options)}`,
+		`Parser error: ${getErrorMessage(err)}`,
+		`Response preview (${Math.min(raw.length, RESPONSE_PREVIEW_LENGTH)} of ${
+			raw.length
+		} chars):`,
+		responsePreview,
+	];
+
+	error(lines.join('\n'));
+
+	if (err instanceof Error && err.stack) {
+		error(err.stack);
+	}
+}
+
+function getCallSiteForMethod(methodName: string) {
+	const stack = new Error().stack;
+	if (!stack) return undefined;
+
+	const frames = stack.split('\n').map((line) => line.trim());
+	const methodFrame = frames.find(
+		(line) => line.includes(methodName) && !line.includes('parseApiResponse')
+	);
+	const apiFrame = frames.find(
+		(line) =>
+			/snc-api\.(ts|js)/.test(line) &&
+			!line.includes('parseApiResponse') &&
+			!line.includes('getCallSiteForMethod') &&
+			!line.includes('logInvalidJsonResponse')
+	);
+
+	return normalizeStackFrame(methodFrame || apiFrame);
+}
+
+function normalizeStackFrame(frame: string | undefined) {
+	return frame ? frame.replace(/^at\s+/, '') : undefined;
+}
+
+function formatRequest(options: RequestOptions | undefined) {
+	if (!options) return 'unknown';
+
+	const query = Object.keys(options.qs || {}).length
+		? ` qs=${JSON.stringify(options.qs)}`
+		: '';
+
+	return `${options.method || 'GET'} ${redactUrl(options.url)}${query}`;
+}
+
+function redactUrl(url: string) {
+	return url.replace(
+		/([?&][^=]*(?:password|token|cookie|authorization|sysparm_ck)[^=]*=)[^&]*/gi,
+		'$1[redacted]'
+	);
+}
+
+function getResponsePreview(raw: string) {
+	if (!raw) return '<empty response>';
+
+	const normalized = raw.replace(/\r\n/g, '\n');
+	if (normalized.length <= RESPONSE_PREVIEW_LENGTH) {
+		return normalized;
+	}
+
+	return `${normalized.slice(0, RESPONSE_PREVIEW_LENGTH)}\n... truncated ${
+		normalized.length - RESPONSE_PREVIEW_LENGTH
+	} chars`;
+}
 
 /**
  * Get response of Scripted Rest API Request
@@ -19,7 +132,11 @@ export async function executeScriptAPIRequest(
 		options.body = body;
 		const resp = await request(options);
 		await sleep(100);
-		const data = JSON.parse(resp);
+		const data = parseApiResponse<{ result: unknown }>(
+			resp,
+			'executeScriptAPIRequest',
+			options
+		);
 		return { status: 200, result: data.result };
 	} catch (err) {
 		error(err);
@@ -54,7 +171,11 @@ export async function getRecordsForTable(
 		);
 		const raw = await request(options);
 		await sleep(100);
-		const resp = JSON.parse(raw);
+		const resp = parseApiResponse<{ result: any[] }>(
+			raw,
+			'getRecordsForTable',
+			options
+		);
 		return resp.result;
 	}
 
@@ -64,6 +185,9 @@ export async function getRecordsForTable(
 
 	for (let i = 0; i < pages; i++) {
 		const offset = i * THRESHOLD;
+		const message = `Requesting ${THRESHOLD} records for table ${tableName} with offset ${offset}`;
+		log(message);
+		Logger.info(message);
 		const pageParams: NowApiProperties = {
 			...parameters,
 			limit: THRESHOLD,
@@ -76,7 +200,11 @@ export async function getRecordsForTable(
 		);
 		const respRaw = await request(options);
 		await sleep(100);
-		const resp = JSON.parse(respRaw);
+		const resp = parseApiResponse<{ result: any }>(
+			respRaw,
+			'getRecordsForTable',
+			options
+		);
 
 		if (resp && Array.isArray(resp.result)) {
 			results.push(...resp.result);
@@ -105,7 +233,11 @@ export async function getSingleRecord(
 	});
 	const raw = await request(options);
 	await sleep(100);
-	const resp = JSON.parse(raw);
+	const resp = parseApiResponse<{ result: NowRecord }>(
+		raw,
+		'getSingleRecord',
+		options
+	);
 	return resp.result;
 }
 
@@ -127,7 +259,11 @@ export async function updateRecord(
 	options.body = body;
 	const raw = await request(options);
 	await sleep(100);
-	const resp = JSON.parse(raw);
+	const resp = parseApiResponse<{ result: unknown }>(
+		raw,
+		'updateRecord',
+		options
+	);
 	return resp.result;
 }
 
@@ -152,7 +288,11 @@ export async function getRecordsCount(
 
 		const raw = await request(options);
 		await sleep(100);
-		const resp = JSON.parse(raw);
+		const resp = parseApiResponse<{ result: any }>(
+			raw,
+			'getRecordsCount',
+			options
+		);
 
 		// Handle several possible response shapes returned by ServiceNow or helpers
 		// 1) resp.result is a number

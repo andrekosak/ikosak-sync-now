@@ -287,8 +287,7 @@ export async function deleteCredentialsCommand() {
 		// update UI elements that show instance info
 		resyncButton.updateText();
 	} catch (err) {
-		// eslint-disable-next-line no-console
-		console.error('Failed to delete credentials', err);
+		error('Failed to delete credentials', err);
 		ui.showErrorMessage('Failed to delete credentials (see console)');
 	}
 }
