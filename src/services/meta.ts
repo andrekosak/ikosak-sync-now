@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { error, log } from 'iconsole-logger';
+import { error, log } from '../lib/console';
 import * as path from 'path';
 
 import { KosGlobals } from '../types/kos-globals';

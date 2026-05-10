@@ -1,11 +1,9 @@
-import * as cheerio from 'cheerio';
-import * as Request from 'request-promise-native';
 import { ViewColumn, window } from 'vscode';
 
 import { showProgressBar } from '../ui/notifications';
 import { showErrorMessage } from '../ui/promts';
 import { meta } from './meta';
-import { getOptions, request } from '../lib/request';
+import { getOptions, request, RequestOptions } from '../lib/request';
 import { scopeService } from './scope';
 import { settings } from './settings';
 
@@ -36,7 +34,7 @@ class ScriptsBackground {
 	}
 
 	async executeOnServer(script: string, ckToken: string, scope = 'global') {
-		const options: Request.Options = await getOptions('/sys.scripts.do', {
+		const options: RequestOptions = await getOptions('/sys.scripts.do', {
 			method: 'POST',
 		});
 		options.form = {
@@ -56,8 +54,7 @@ class ScriptsBackground {
 	async getCkToken() {
 		const options = await getOptions('/sys.scripts.do');
 		const body = await request(options);
-		const bodyHtml = cheerio.load(body);
-		return bodyHtml('input[name="sysparm_ck"]').attr('value');
+		return getInputValue(body, 'sysparm_ck');
 	}
 
 	/**
@@ -92,6 +89,37 @@ class ScriptsBackground {
 		);
 		panel.webview.html = result;
 	}
+}
+
+function getInputValue(html: string, inputName: string) {
+	const inputTagPattern = /<input\b[^>]*>/gi;
+	let match = inputTagPattern.exec(html);
+
+	while (match) {
+		const attributes = parseAttributes(match[0]);
+		if (attributes.name === inputName) {
+			return attributes.value;
+		}
+		match = inputTagPattern.exec(html);
+	}
+	return undefined;
+}
+
+function parseAttributes(tag: string) {
+	const attributes: Record<string, string> = {};
+	const attrPattern =
+		/([^\s=/"'>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>=]+)))?/g;
+	let match = attrPattern.exec(tag);
+
+	while (match) {
+		const [, name, doubleQuoted, singleQuoted, unquoted] = match;
+		if (name === 'input') continue;
+		attributes[name.toLowerCase()] =
+			doubleQuoted || singleQuoted || unquoted || '';
+		match = attrPattern.exec(tag);
+	}
+
+	return attributes;
 }
 
 export const backgroundScript = new ScriptsBackground();

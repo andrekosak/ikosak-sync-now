@@ -1,29 +1,51 @@
 import { settings } from '../services/settings';
-import * as r from 'request-promise-native';
+import got, { Method } from 'got';
+import { CookieJar } from 'tough-cookie';
 
 interface RequestParams {
 	method?: string;
 	[key: string]: unknown;
 }
 
+export interface RequestOptions {
+	url: string;
+	method?: string;
+	body?: string;
+	headers?: Record<string, unknown>;
+	qs?: Record<string, unknown>;
+	form?: Record<string, unknown>;
+}
+
 // TODO: Create a generic method that would catch errors
 
 class Request {
-	r = r.defaults({
-		jar: true,
-		// resolveWithFullResponse: true,
-		headers: {
+	private cookieJar = new CookieJar();
+	r = async (options: RequestOptions) => {
+		const headers = {
 			Accept: 'application/json',
-			'Content-Type': 'application/json',
-			timeout: 90000,
-			method: 'GET',
-		},
-	});
+			...(options.form ? {} : { 'Content-Type': 'application/json' }),
+			...this.normalizeHeaders(options.headers),
+		};
+
+		const response = await got(options.url, {
+			method: (options.method || 'GET') as Method,
+			headers,
+			body: options.body || undefined,
+			form: this.normalizeRecord(options.form),
+			searchParams: this.normalizeRecord(options.qs),
+			cookieJar: this.cookieJar,
+			timeout: {
+				request: 90000,
+			},
+		});
+
+		return response.body;
+	};
 	constructor() {}
 
 	static async getRequestOptions<
 		T extends { method?: string } = { method?: string }
-	>(url: string, params: T = {} as T): Promise<r.Options> {
+	>(url: string, params: T = {} as T): Promise<RequestOptions> {
 		/**
 		 * Read configs before each request
 		 */
@@ -48,6 +70,26 @@ class Request {
 			'api/now/v2/table/sys_user?user_name=admin&sysparm_fields=user_name,name'
 		);
 		return this.r(options);
+	}
+
+	private normalizeHeaders(headers: RequestOptions['headers']) {
+		const normalized: Record<string, string> = {};
+		for (const [key, value] of Object.entries(headers || {})) {
+			if (value === undefined) continue;
+			normalized[key] = String(value);
+		}
+		return normalized;
+	}
+
+	private normalizeRecord(record: Record<string, unknown> | undefined) {
+		if (!record) return undefined;
+
+		const normalized: Record<string, string> = {};
+		for (const [key, value] of Object.entries(record)) {
+			if (value === undefined) continue;
+			normalized[key] = String(value);
+		}
+		return normalized;
 	}
 }
 

@@ -1,4 +1,4 @@
-import { error, log } from 'iconsole-logger';
+import { error, log } from './lib/console';
 import * as vscode from 'vscode';
 
 import { createInitSyncConfig } from './services/config';
@@ -230,9 +230,8 @@ export async function resyncCurrentFile(): Promise<void> {
 					// Overwrite local content with remote content
 					await replaceFileContent(editor, remoteContent);
 					// Save hash to metadata object in memory
-					const config = recordSyncer.getTableConfigurationFromFilePath(
-						filePath
-					);
+					const config =
+						recordSyncer.getTableConfigurationFromFilePath(filePath);
 					if (!config) {
 						ui.showErrorMessage('File not recognized as SNOW record.');
 						return;

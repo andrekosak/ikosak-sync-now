@@ -1,4 +1,4 @@
-import { log, error } from 'iconsole-logger';
+import { log, error } from './lib/console';
 import { request, getOptions } from './lib/request';
 import { sleep } from './lib/utils';
 import { settings, Config } from './services/settings';
@@ -20,7 +20,7 @@ export async function executeScriptAPIRequest(
 		const resp = await request(options);
 		await sleep(100);
 		const data = JSON.parse(resp);
-		return { status: resp.statusCode, result: data.result };
+		return { status: 200, result: data.result };
 	} catch (err) {
 		error(err);
 		return { status: 404, result: '' };

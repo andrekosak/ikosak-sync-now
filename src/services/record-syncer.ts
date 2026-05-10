@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { error, log } from 'iconsole-logger';
+import { error, log } from '../lib/console';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -50,9 +50,9 @@ export class RecordSyncerService {
 				 * @private
 				 * @type {SyncConfiguration}
 				 */
-				this._config = yaml.safeLoad(
+				this._config = yaml.load(
 					fs.readFileSync(configFilePathYaml, 'utf8')
-				);
+				) as SyncConfiguration;
 			} catch (e) {
 				this.configLoadError = `Error while loading sync config file ${
 					syncConfigFilename + '.yaml'

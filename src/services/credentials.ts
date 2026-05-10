@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { log } from 'iconsole-logger';
+import { log } from '../lib/console';
 
 /**
  * Service for storing and retrieving credentials securely using VS Code's SecretStorage API

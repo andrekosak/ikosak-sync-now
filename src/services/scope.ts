@@ -1,7 +1,7 @@
 import * as api from '../snc-api';
 import * as ui from '../ui/promts';
 import { meta } from './meta';
-import { log, print } from 'iconsole-logger';
+import { log, print } from '../lib/console';
 
 class ScopeService {
 	private metaService = meta;

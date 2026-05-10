@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { log, print } from 'iconsole-logger';
+import { log, print } from './lib/console';
 import { credentials } from './services/credentials';
 
 // This method is called when your extension is activated. Activation is

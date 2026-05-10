@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
 import { settings } from '../services/settings';
-const elegantSpinner = require('elegant-spinner');
 
 export class UploadButton {
 	position: vscode.StatusBarAlignment;
 	positionIndex: number;
 	uploadItemDefaultIcon: string;
 	uploadItemDefaultText: string;
-	interval: any;
 	uploadItem: vscode.StatusBarItem;
 	uploadItemInProgress: vscode.StatusBarItem;
 	constructor() {
@@ -15,7 +13,6 @@ export class UploadButton {
 		this.positionIndex = Number.MAX_SAFE_INTEGER - 2;
 		this.uploadItemDefaultIcon = '$(cloud-upload)';
 		this.uploadItemDefaultText = 'Upload file';
-		this.interval = undefined;
 
 		this.uploadItem = vscode.window.createStatusBarItem(
 			this.position,
@@ -39,21 +36,12 @@ export class UploadButton {
 
 	startSpinner() {
 		this.uploadItem.hide();
-
-		const spinner = elegantSpinner();
-		const update = () => {
-			this.uploadItemInProgress.text =
-				spinner() + ' ' + this.uploadItemDefaultText;
-		};
-		this.interval = global.setInterval(update, 100);
+		this.uploadItemInProgress.text =
+			'$(sync~spin) ' + this.uploadItemDefaultText;
 		this.uploadItemInProgress.show();
 	}
 
 	stopSpinner() {
-		if (this.interval !== undefined) {
-			global.clearInterval(this.interval);
-			this.interval = undefined;
-		}
 		this.uploadItemInProgress.hide();
 		this.uploadItem.show();
 	}
@@ -63,7 +51,6 @@ export class ResyncButton {
 	position: vscode.StatusBarAlignment;
 	positionIndex: number;
 	itemDefaultIcon: string;
-	interval: any;
 	menuBarItem: vscode.StatusBarItem;
 	itemInProgress: vscode.StatusBarItem;
 	instanceLabel: any;
@@ -71,7 +58,6 @@ export class ResyncButton {
 		this.position = vscode.StatusBarAlignment.Left;
 		this.positionIndex = Number.MAX_SAFE_INTEGER - 1;
 		this.itemDefaultIcon = '$(code)';
-		this.interval = undefined;
 
 		this.menuBarItem = vscode.window.createStatusBarItem(
 			this.position,
@@ -99,20 +85,11 @@ export class ResyncButton {
 
 	startSpinner() {
 		this.menuBarItem.hide();
-
-		const spinner = elegantSpinner();
-		const update = () => {
-			this.itemInProgress.text = spinner() + ' ' + this.instanceLabel;
-		};
-		this.interval = global.setInterval(update, 100);
+		this.itemInProgress.text = '$(sync~spin) ' + this.instanceLabel;
 		this.itemInProgress.show();
 	}
 
 	stopSpinner() {
-		if (this.interval !== undefined) {
-			global.clearInterval(this.interval);
-			this.interval = undefined;
-		}
 		this.itemInProgress.hide();
 		this.menuBarItem.show();
 	}

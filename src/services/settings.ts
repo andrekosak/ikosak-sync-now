@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { log } from 'iconsole-logger';
+import { log } from '../lib/console';
 import * as yaml from 'js-yaml';
 import * as ui from '../ui/promts';
 import { credentials } from './credentials';
@@ -50,9 +50,9 @@ class SettingsService {
 		const yamlConfigExists = fs.existsSync(configFilePathYaml);
 		if (yamlConfigExists) {
 			try {
-				this.ConfigObj = yaml.safeLoad(
+				this.ConfigObj = yaml.load(
 					fs.readFileSync(configFilePathYaml, 'utf8')
-				);
+				) as Config;
 				return;
 			} catch (e) {
 				ui.showErrorMessage(
@@ -72,7 +72,7 @@ class SettingsService {
 		// There is no config - create a new file
 		SettingsService.writeFileOrCreate(
 			configFilePathYaml,
-			yaml.safeDump(this.config)
+			yaml.dump(this.config)
 		);
 	}
 
@@ -83,7 +83,7 @@ class SettingsService {
 	saveConfigToFile() {
 		const configDir = this.getProjectConfigDirPath();
 		const configPath = path.resolve(configDir, `${configFile}`);
-		fs.writeFileSync(configPath, yaml.safeDump(this.config), {
+		fs.writeFileSync(configPath, yaml.dump(this.config), {
 			encoding: 'utf8',
 		});
 	}

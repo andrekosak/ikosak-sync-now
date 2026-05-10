@@ -1,6 +1,6 @@
 import { credentials } from './credentials';
 import * as ui from '../ui/promts';
-import { log } from 'iconsole-logger';
+import { log } from '../lib/console';
 
 /**
  * Migrate credentials from config object to secure storage.
@@ -42,13 +42,13 @@ export async function migrateCredentialsToSecureStorage(
 		try {
 			// Decode the basic auth header
 			const base64Credentials = basicAuthToMigrate.replace('Basic ', '');
-			const credentials_str = Buffer.from(base64Credentials, 'base64').toString(
+			const credentialsStr = Buffer.from(base64Credentials, 'base64').toString(
 				'utf8'
 			);
 			// Split only on the first colon to handle passwords containing colons
-			const colonIndex = credentials_str.indexOf(':');
-			const username = credentials_str.substring(0, colonIndex);
-			const password = credentials_str.substring(colonIndex + 1);
+			const colonIndex = credentialsStr.indexOf(':');
+			const username = credentialsStr.substring(0, colonIndex);
+			const password = credentialsStr.substring(colonIndex + 1);
 
 			if (username && password) {
 				// Store in secure storage

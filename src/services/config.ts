@@ -1,4 +1,4 @@
-import { log, error } from 'iconsole-logger';
+import { log, error } from '../lib/console';
 import { settings, syncConfigFilename, configDir } from './settings';
 import * as fs from 'fs';
 import * as path from 'path';

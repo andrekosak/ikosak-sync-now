@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { settings } from '../services/settings';
-import { log } from 'iconsole-logger';
+import { log } from '../lib/console';
 
 /**
  * Prompt the user whether they want to see a diff, continue with the current action or cancel the operation.

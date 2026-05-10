@@ -1,4 +1,4 @@
-import { log, print } from 'iconsole-logger';
+import { log, print } from './lib/console';
 import * as vscode from 'vscode';
 
 import { meta } from './services/meta';
