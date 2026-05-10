@@ -132,7 +132,7 @@
 		"compile": "tsc -p ./",
 		"copy": "ncp ./src/assets ./out/assets",
 		"watch": "tsc -watch -p ./",
-		"package": "vsce package --baseContentUrl",
+		"package": "vsce package --baseContentUrl https://raw.githubusercontent.com/andrekosak/ikosak-sync-now/master",
 		"publish": "vsce publish -p $VSCE_TOKEN",
 		"patch": "npm version patch",
 		"test": "jest --passWithNoTests"
