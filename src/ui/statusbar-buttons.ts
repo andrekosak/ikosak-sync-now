@@ -15,18 +15,22 @@ export class UploadButton {
 		this.uploadItemDefaultText = 'Upload file';
 
 		this.uploadItem = vscode.window.createStatusBarItem(
+			'ikosak-sync-now.uploadFile',
 			this.position,
 			this.positionIndex
 		);
+		this.uploadItem.name = 'Upload file';
 		this.uploadItem.command = 'ikosak-sync-now.uploadFile';
 		this.uploadItem.tooltip = 'Upload current file to ServiceNow.';
 		this.uploadItem.text =
 			this.uploadItemDefaultIcon + ' ' + this.uploadItemDefaultText;
 
 		this.uploadItemInProgress = vscode.window.createStatusBarItem(
+			'ikosak-sync-now.uploadInProgress',
 			this.position,
 			this.positionIndex
 		);
+		this.uploadItemInProgress.name = 'Upload in progress';
 		this.uploadItemInProgress.tooltip = 'Upload in Progress';
 	}
 
@@ -60,13 +64,16 @@ export class ResyncButton {
 		this.itemDefaultIcon = '$(code)';
 
 		this.menuBarItem = vscode.window.createStatusBarItem(
+			'ikosak-sync-now.resyncInstance',
 			this.position,
 			this.positionIndex
 		);
+		this.menuBarItem.name = 'Resync instance';
 		this.menuBarItem.command = 'ikosak-sync-now.resyncInstance';
 		this.menuBarItem.tooltip = 'Resync all files';
 
 		this.itemInProgress = vscode.window.createStatusBarItem(
+			'ikosak-sync-now.resyncInProgress',
 			this.position,
 			this.positionIndex
 		);
