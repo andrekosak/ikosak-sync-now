@@ -166,7 +166,7 @@
 	"dependencies": {
 		"got": "11.8.6",
 		"iconsole-logger": "1.1.0",
-		"js-yaml": "4.1.1",
+		"js-yaml": "4.2.0",
 		"ncp": "2.0.0",
 		"tough-cookie": "4.1.4"
 	}
